@@ -6,6 +6,7 @@ import Text
 --todos:
 --actual collision detection (done)
 --randomly placed objects
+--vi key navigation
 --endgame detection (done)
 --endgame animation (done)
 --edge detection (done?)
@@ -82,9 +83,8 @@ render (w, h) robot =
   in case kittenFound robot of
     False -> collage w h ( (++) ([
       filled black (rect (toFloat w) (toFloat h))
-      , move (nextPoint (robot.xd, robot.yd) (w, h) roboElem) (toForm roboElem)
       , move (nextPoint (robot.xd, robot.yd - 1) (w, h) roboElem) (toForm (getMessage robot)) 
-      , move (nextPoint ((head items).xd, (head items).yd) (w, h) roboElem) (toForm (Text.text (fontify white (head items).char)))
+      , move (nextPoint (robot.xd, robot.yd) (w, h) roboElem) (toForm roboElem)
     ]) (map (drawItemForm roboElem (w,h)) items))
     True -> foundAnimation (w, h) robot
 

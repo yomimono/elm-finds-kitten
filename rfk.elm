@@ -12,7 +12,8 @@ import List
 --endgame animation
 --edge detection (done?)
 
-type Item = { char : String, description: String, xd : Int, yd : Int }
+type Item a = { a | char:String, description:String, xd:Int, yd:Int }
+type Colliding a = { a | collidingWith: Item {} }
 robot = { char = "@", xd = 0, yd = 0, description = "Robot, sans kitten." }
 characters = "$%^&*()qwertyuiop[]{}asdfghjkl;:zxcvbnm,.<>"
 item = { char = "#", description = "An item.", xd = 2, yd = 2}
@@ -31,22 +32,23 @@ nextPoint (x, y) (w', h') roboElem =
 fontify : String -> Text
 fontify x = Text.color white ( monospace ( toText x) )
 
-samePlace : Item -> Item -> Maybe Item
-samePlace robot item = 
-  if robot.xd == item.xd && robot.yd == item.yd then Just item else Nothing
+samePlace : Item a-> Item a-> Bool
+samePlace robot item = robot.xd == item.xd && robot.yd == item.yd
 
-collision : Item -> [Item] -> Maybe Item
+--Determine the case where the robot is investigating an object.
+--The robot shouldn't be able to collide with multiple things simultaneously,
+--but if this does occur, we'll just take the first object.
+collision : Item a -> [Item a] -> Maybe (Item a)
 collision robot items = 
-  let thisItem = List.foldl (samePlace robot) Nothing items 
-  in if isJust thisItem then thisItem
-     else Nothing
+  let found = (List.filter (samePlace robot) items )
+  in if List.isEmpty found then Nothing else Just (head found)
 
-getDescription : Maybe Item -> String
+getDescription : Maybe (Item a) -> String
 getDescription x = case x of 
   Just x -> x.description
-  Nothing -> ""
+  Nothing -> "NOT KITTEN"
 
-render : (Int, Int) -> Item -> Element
+render : (Int, Int) -> Item a-> Element
 render (w, h) robot =
   let roboElem = Text.text ( fontify robot.char )
       message = Text.text ( fontify (getDescription (collision robot items)))
@@ -58,11 +60,12 @@ render (w, h) robot =
   ] --and add all of the items to this list as well
 
 
-step : {x:Int, y:Int} -> Item -> Item
+step : {x:Int, y:Int} -> Item a-> Item a
 step {x, y} ({char, xd, yd} as r) = 
     --disallow movement over another item
     let next_robot = { char = r.char, xd = r.xd + x, yd = r.yd + y, description = r.description}
-    in if isJust (collision next_robot items) then robot else next_robot
+        investigating = collision next_robot items
+    in if isJust investigating then { r | collidingWith = investigating } else next_robot
 
 input : Signal {x:Int, y:Int}
 input = --let delta = lift (\t -> t/20) (fps 25)

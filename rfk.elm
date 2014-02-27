@@ -44,7 +44,7 @@ collision robot items =
 
 --convenience function for looking up what message ought to be displayed
 --based on whether our robot's just investigated something and hasn't yet 
---moved away.
+--moved away.23
 getMessage : Colliding a -> Element
 getMessage r = Text.text (fontify r.collidingWith)
 
@@ -66,9 +66,11 @@ removeCollision r = { r | collidingWith <- "" }
 
 step : {x:Int, y:Int} -> Colliding(Item {}) -> Colliding(Item {})
 step {x, y} ({xd, yd, collidingWith} as r) = 
-  case (collision (updatePosition r (x, y)) items) of
-    Just otherItem -> { r | collidingWith <- otherItem.description }
-    Nothing -> updatePosition (removeCollision r) (x, y)
+  if x /= 0 || y /= 0 then
+    case (collision (updatePosition r (x, y)) items) of
+      Just otherItem -> { r | collidingWith <- otherItem.description }
+      Nothing -> updatePosition (removeCollision r) (x, y)
+  else r
 
 input : Signal {x:Int, y:Int}
 input = --let delta = lift (\t -> t/20) (fps 25)

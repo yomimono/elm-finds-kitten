@@ -1,25 +1,26 @@
 import Window
 import Keyboard
 import List
-
---positions really need to be in terms of fixed-width
---characters for this to work properly
+import Text
 
 --todos:
 --actual collision detection (done)
 --randomly placed objects
---endgame detection 
---endgame animation
+--endgame detection (done)
+--endgame animation (done)
 --edge detection (done?)
 
-type Item a = { a | char:String, description:String, xd:Int, yd:Int, isKitten:Bool }
+type Item a = { a | char:String, description:String, xd:Int, yd:Int, cd:Color, isKitten:Bool }
 type Colliding b = { b | collidingWith: String }
 robot = { char = "@", xd = 0, yd = 0, 
-  description = "Robot, sans kitten.", collidingWith = "", isKitten = False }
+  description = "Robot, sans kitten.", collidingWith = "", 
+  isKitten = False , cd = white}
 characters = "$%^&*()qwertyuiop[]{}asdfghjkl;:zxcvbnm,.<>"
 kittenDescription = "You found kitten!  Good job, robot!"
 items = [ { char = "#", description = kittenDescription,
-            isKitten = True, xd = 2, yd = 2} ]
+            isKitten = True, xd = 2, yd = 2, cd = orange},
+          { char = "%", description = "An automatic robot-liker.  It smiles at you!", 
+            isKitten = False, xd = -3, yd = -5, cd = green} ]
 
 nextPoint : (Int, Int) -> (Int, Int) -> Element -> (Float, Float)
 nextPoint (x, y) (w', h') roboElem =
@@ -31,8 +32,8 @@ nextPoint (x, y) (w', h') roboElem =
        | otherwise -> (nextX, nextY)
     
   
-fontify : String -> Text
-fontify x = Text.color white ( monospace ( toText x) )
+fontify : Color -> String -> Text
+fontify col x = Text.color col ( monospace ( toText x) )
 
 samePlace : Item a -> Item b -> Bool
 samePlace robot item = robot.xd == item.xd && robot.yd == item.yd
@@ -49,40 +50,42 @@ collision robot items =
 --based on whether our robot's just investigated something and hasn't yet 
 --moved away.23
 getMessage : Colliding a -> Element
-getMessage r = Text.text (fontify r.collidingWith)
+getMessage r = Text.text (fontify white r.collidingWith)
 
 kittenFound : Colliding a -> Bool
 kittenFound r = r.collidingWith == kittenDescription
 
 drawRobot : Element
-drawRobot = Text.text (Text.color gray (monospace ( toText "[-]  \n(+)=C\n| |\n000")))
+drawRobot = Text.text (fontify gray "[-]   \n(+)=C \n| | \n000 ")
 
 drawHeart : Element
-drawHeart = Text.text (Text.color red (monospace (toText ".::. .::.\n:::::::::\n \':::::\'\n  \':::\'")))
+drawHeart = Text.text (fontify red ".::. .::.\n:::::::::\n \':::::\'\n  \':::\'")
 
 drawKitten : Element
-drawKitten = Text.text (Text.color orange (monospace 
-  (toText (String.append " |\\_/|\n" " |0 0|__\n, =-*-=  \\\nc_c__(___)"))))
+drawKitten = Text.text (fontify orange (String.append " |\\_/|\n" " |0 0|__\n =-*-=  \\\nc_c__(___)"))
 
 foundAnimation : (Int, Int) -> Colliding (Item {}) -> Element
 foundAnimation (w,h) robot = 
     collage w h [
       filled black (rect (toFloat w) (toFloat h))
-      , toForm drawRobot
-      , toForm drawHeart
-      , toForm drawKitten
+      , toForm (flow right [ drawRobot, drawHeart, drawKitten ])
     ]
+
+drawItemForm : Element -> (Int, Int) -> Item a -> Form
+drawItemForm roboElem (w, h) item = 
+    move (nextPoint (item.xd, item.yd) (w, h) roboElem) 
+         (toForm (Text.text (fontify item.cd item.char)))
 
 render : (Int, Int) -> Colliding (Item {}) -> Element
 render (w, h) robot =
-  let roboElem = Text.text ( fontify robot.char )
+  let roboElem = Text.text ( fontify white robot.char )
   in case kittenFound robot of
-    False -> collage w h [
+    False -> collage w h ( (++) ([
       filled black (rect (toFloat w) (toFloat h))
       , move (nextPoint (robot.xd, robot.yd) (w, h) roboElem) (toForm roboElem)
       , move (nextPoint (robot.xd, robot.yd - 1) (w, h) roboElem) (toForm (getMessage robot)) 
-      , move (nextPoint ((head items).xd, (head items).yd) (w, h) roboElem) (toForm (Text.text (fontify (head items).char)))
-    ] --and add all of the items to this list as well
+      , move (nextPoint ((head items).xd, (head items).yd) (w, h) roboElem) (toForm (Text.text (fontify white (head items).char)))
+    ]) (map (drawItemForm roboElem (w,h)) items))
     True -> foundAnimation (w, h) robot
 
 updatePosition : Item a -> (Int, Int) -> Item a

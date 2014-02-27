@@ -9,10 +9,11 @@ import Keyboard
 --randomly placed objects
 --endgame detection 
 --endgame animation
---edge detection
+--edge detection (done?)
 
 type Item = { char : String, description: String, xd : Int, yd : Int }
 robot = { char = "@", xd = 0, yd = 0, description = "Robot, sans kitten." }
+characters = "$%^&*()qwertyuiop[]{}asdfghjkl;:zxcvbnm,.<>"
 item = { char = "#", description = "An item.", xd = 2, yd = 2}
 
 nextPoint : (Int, Int) -> (Int, Int) -> Element -> (Float, Float)
@@ -25,20 +26,21 @@ nextPoint (x, y) (w', h') roboElem =
        | otherwise -> (nextX, nextY)
     
   
-fontify : Text -> Text
-fontify x = Text.color white ( monospace x )
+fontify : String -> Text
+fontify x = Text.color white ( monospace ( toText x) )
 
 collision : Item -> [Item] -> Item
 collision robot items = item
 
 render : (Int, Int) -> Item -> Element
 render (w, h) robot =
-  let roboElem = Text.text ( fontify ( toText robot.char ))
-      message = Text.text ( fontify ( toText (.description (collision robot [item])) ) )
+  let roboElem = Text.text ( fontify robot.char )
+      message = Text.text ( fontify (.description (collision robot [item])) )
   in collage w h [
     filled black (rect (toFloat w) (toFloat h))
   , move (nextPoint (robot.xd, robot.yd) (w, h) roboElem) (toForm roboElem)
   , move (nextPoint (robot.xd, robot.yd - 1) (w, h) roboElem) (toForm message) 
+  , move (nextPoint (item.xd, item.yd) (w, h) roboElem) (toForm (Text.text (fontify item.char)))
   ] --and add all of the items to this list as well
 
 
@@ -52,3 +54,4 @@ input = --let delta = lift (\t -> t/20) (fps 25)
 
 main =
   lift2 render Window.dimensions (foldp step robot input)
+

@@ -31,7 +31,7 @@ nextPoint (x, y) (w', h') roboElem =
 fontify : String -> Text
 fontify x = Text.color white ( monospace ( toText x) )
 
-samePlace : Item a-> Item a-> Bool
+samePlace : Item a -> Item b -> Bool
 samePlace robot item = robot.xd == item.xd && robot.yd == item.yd
 
 --Determine the case where the robot is investigating an object.
@@ -42,16 +42,11 @@ collision robot items =
   let found = (List.filter (samePlace robot) items )
   in if List.isEmpty found then Nothing else Just (head found)
 
-getDescription : Maybe (Item a) -> String
-getDescription x = case x of 
-  Just x -> x.description
-  Nothing -> "NOT KITTEN"
-
 --convenience function for looking up what message ought to be displayed
 --based on whether our robot's just investigated something and hasn't yet 
 --moved away.
 getMessage : Colliding a -> Element
-getMessage r = Text.text (fontify robot.collidingWith)
+getMessage r = Text.text (fontify r.collidingWith)
 
 render : (Int, Int) -> Colliding (Item {}) -> Element
 render (w, h) robot =
@@ -66,11 +61,14 @@ render (w, h) robot =
 updatePosition : Item a -> (Int, Int) -> Item a
 updatePosition r (x, y) = {r | xd <- r.xd + x, yd <- r.yd + y}
 
+removeCollision : Colliding a -> Colliding a
+removeCollision r = { r | collidingWith <- "" }
+
 step : {x:Int, y:Int} -> Colliding(Item {}) -> Colliding(Item {})
 step {x, y} ({xd, yd, collidingWith} as r) = 
   case (collision (updatePosition r (x, y)) items) of
-    Just otherItem -> r --{ r | collidingWith = otherItem.description }
-    Nothing -> updatePosition r (x, y)
+    Just otherItem -> { r | collidingWith <- otherItem.description }
+    Nothing -> updatePosition (removeCollision r) (x, y)
 
 input : Signal {x:Int, y:Int}
 input = --let delta = lift (\t -> t/20) (fps 25)

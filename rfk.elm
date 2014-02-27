@@ -1,5 +1,6 @@
 import Window
 import Keyboard
+import List
 
 --positions really need to be in terms of fixed-width
 --characters for this to work properly
@@ -30,18 +31,25 @@ nextPoint (x, y) (w', h') roboElem =
 fontify : String -> Text
 fontify x = Text.color white ( monospace ( toText x) )
 
+samePlace : Item -> Item -> Maybe Item
+samePlace robot item = 
+  if robot.xd == item.xd && robot.yd == item.yd then Just item else Nothing
+
 collision : Item -> [Item] -> Maybe Item
-collision robot items = Just item --TODO: actual collision detection.
+collision robot items = 
+  let thisItem = List.foldl (samePlace robot) Nothing items 
+  in if isJust thisItem then thisItem
+     else Nothing
 
 getDescription : Maybe Item -> String
-getDescription x = case maybe of 
-    Maybe p -> p.description
-    Nothing -> ""
+getDescription x = case x of 
+  Just x -> x.description
+  Nothing -> ""
 
 render : (Int, Int) -> Item -> Element
 render (w, h) robot =
   let roboElem = Text.text ( fontify robot.char )
-      message = Text.text ( fontify (.description (collision robot items)) )
+      message = Text.text ( fontify (getDescription (collision robot items)))
   in collage w h [
     filled black (rect (toFloat w) (toFloat h))
   , move (nextPoint (robot.xd, robot.yd) (w, h) roboElem) (toForm roboElem)

@@ -2,8 +2,8 @@ import Window
 import Keyboard
 import List
 import Random
-import Generator as G
-import Generator.Standard as GS
+import Generator
+import Generator.Standard
 
 --todos:
 --actual collision detection (done)
@@ -107,21 +107,22 @@ input = --let delta = lift (\t -> t/20) (fps 25)
         --in sampleOn delta (lift2 (,) delta Keyboard.arrows)
         Keyboard.arrows
 
-makeGen : Generator Standard
-makeGen = GS.generator 42
+makeGen : Generator.Generator Generator.Standard.Standard
+makeGen = Generator.Standard.generator 42
 
 --pass maximum/minimum to this function
 --(should bear some resemblance to the wrapping level, 
 --otherwise kitten may be tragically rendered offscreen and unreachable)
 makeItems : (Int) -> (Int, Int) -> [Item {}]
 makeItems numToMake (w, h) =
-    (++) ([ { char = "#", description = kittenDescription,
+    let (gen', _, nonKittenItems) = itemify (makeGen, rawItemList, [])
+    in (++) ([ { char = "#", description = kittenDescription,
        isKitten = True, xd = 2, yd = 2, cd = orange} ] ) 
-      (map (itemify makeGen) (take numToMake rawItemList))
+      (take numToMake nonKittenItems)
 
-itemify : (G.Generator, [String], [Item {}]) -> (G.Generator, [String], [Item {}])
-itemify (gen, [descs], items) = 
-    (gen, tail [descs], items ++ [{ char = "#", description = (head descs), 
+itemify : (Generator.Generator a, [String], [Item {}]) -> (Generator.Generator a, [String], [Item {}])
+itemify (gen, descs, items) = 
+    (gen, tail descs, items ++ [{ char = "#", description = (head descs), 
       isKitten = False, xd = 3, yd = 3, cd = blue }])
 
 main

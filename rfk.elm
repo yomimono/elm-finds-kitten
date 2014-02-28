@@ -1,7 +1,6 @@
 import Window
 import Keyboard
 import List
-import Random
 import Generator
 import Generator.Standard
 
@@ -115,15 +114,16 @@ makeGen = Generator.Standard.generator 42
 --otherwise kitten may be tragically rendered offscreen and unreachable)
 makeItems : (Int) -> (Int, Int) -> [Item {}]
 makeItems numToMake (w, h) =
-    let (gen', _, nonKittenItems) = itemify (makeGen, rawItemList, [])
-    in (++) ([ { char = "#", description = kittenDescription,
-       isKitten = True, xd = 2, yd = 2, cd = orange} ] ) 
-      (take numToMake nonKittenItems)
+  let (gen', _, nonKittenItems) = itemify (makeGen, rawItemList, [])
+  in (++) ([ { char = "#", description = kittenDescription,
+     isKitten = True, xd = 2, yd = 2, cd = orange} ] ) 
+    (take numToMake nonKittenItems)
 
 itemify : (Generator.Generator a, [String], [Item {}]) -> (Generator.Generator a, [String], [Item {}])
-itemify (gen, descs, items) = 
-    (gen, tail descs, items ++ [{ char = "#", description = (head descs), 
-      isKitten = False, xd = 3, yd = 3, cd = blue }])
+itemify (gen, descs, items) =
+  let (randoms, gen') = Generator.listOf (Generator.int32Range (0,200)) 4 gen 
+  in (gen, tail descs, items ++ [{ char = "#", description = (head descs), 
+    isKitten = False, xd = head randoms, yd = last (take 2 randoms), cd = blue }])
 
 main
  =

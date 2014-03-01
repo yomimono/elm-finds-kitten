@@ -107,7 +107,7 @@ input = --let delta = lift (\t -> t/20) (fps 25)
         Keyboard.arrows
 
 makeGen : Generator.Generator Generator.Standard.Standard
-makeGen = Generator.Standard.generator 42
+makeGen = Generator.Standard.generator 22
 
 randomListItem : Generator.Generator b -> [a] -> (a, Generator.Generator b)
 randomListItem gen list =
@@ -125,32 +125,40 @@ randomColor gen =
 
 itemify : (Generator.Generator a, (Int, Int), [String], [Item {}]) -> (Generator.Generator a, (Int, Int), [String], [Item {}])
 itemify (gen, (w, h), descs, items) =
-  --yech, different limits for w and h.
-  let (xrand, nextGen) = Generator.int32Range ((-1 * w), w) gen
+  let (xrand, nextGen) = Generator.int32Range (-1 * w, w) gen
       (yrand, ds9) = Generator.int32Range (-1 * h, h) nextGen
       (charColor, voyager) = randomColor ds9
-      (representation, enterprise) = randomListItem voyager (String.toList characters)
-  in (enterprise, (w, h), tail descs, items ++ 
-    [{ char = String.fromList [representation], 
-    description = (head descs), 
-    isKitten = False, xd = xrand, yd = yrand, cd = charColor }])
+      (representation, enterprise) = randomListItem voyager (String.toList characters) --randomize symbol
+      madeItem = [{ char = String.fromList [representation], description = (head descs),
+        isKitten = False, xd = xrand, yd = yrand, cd = charColor }]
+      (lastGen, _, _, moreItems) = itemify enterprise (w, h) (tail descs) (madeItem ++ items)
+  in (lastGen, (w, h), tail descs, moreItems)
+
+randomListSubset : ([a], [a], Generator.Generator b, Int) -> ([a], [a],Generator.Generator b, Int) 
+randomListSubset (list, random, gen, howManyMore) =
+  if length list < 1 then ([], random, gen, howManyMore)
+  else 
+    let (randomElement, gen') = randomListItem gen list
+    in (List.filter ((/=) randomElement) list, --don't duplicate elements
+        randomElement :: random, gen', howManyMore - 1)
 
 --pass maximum/minimum to this function
 --(should bear some resemblance to the wrapping level, 
 --otherwise kitten may be tragically rendered offscreen and unreachable)
-makeItems : (Int) -> (Int, Int) -> [Item {}]
+makeItems : Int -> (Int, Int) -> [Item {}]
 makeItems numToMake (w, h) =
   let (gen', _, _, nonKittenItems) = itemify (makeGen, (w, h), rawItemList, [])
+      (_, randomizedItems, gen'', _) = randomListSubset (nonKittenItems, [], gen'', numToMake)
   in (++) ([ { char = "#", description = kittenDescription,
      isKitten = True, xd = 2, yd = 2, cd = orange} ] ) 
-    (take numToMake nonKittenItems)
+    (randomizedItems)
 
 
 main
  =
-  let items = makeItems 10 (10, 10)
-  in lift2 render Window.dimensions (foldp step (robot, items) input)
-  --asText (makeItems 10 (0, 10))
+  --let items = makeItems 10 (10, 10)
+  --in lift2 render Window.dimensions (foldp step (robot, items) input)
+  asText (makeItems 10 (0, 10))
 
 rawItemList : [ String ]
 rawItemList = [

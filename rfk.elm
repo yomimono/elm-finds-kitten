@@ -109,26 +109,48 @@ input = --let delta = lift (\t -> t/20) (fps 25)
 makeGen : Generator.Generator Generator.Standard.Standard
 makeGen = Generator.Standard.generator 42
 
+randomListItem : Generator.Generator b -> [a] -> (a, Generator.Generator b)
+randomListItem gen list =
+  if | length list == 1 -> (head list, gen)
+     | otherwise -> 
+       let (index, gen') = Generator.int32Range (1, length list) gen
+       in (last (take index list), gen')
+
+randomColor : Generator.Generator b -> (Color, Generator.Generator b)
+randomColor gen =
+  let (r, nextGen) = Generator.int32Range (0, 255) gen
+      (g, ds9) = Generator.int32Range (0, 255) nextGen
+      (b, voyager) = Generator.int32Range (0, 255) ds9
+  in (rgb r g b , voyager)
+
+itemify : (Generator.Generator a, (Int, Int), [String], [Item {}]) -> (Generator.Generator a, (Int, Int), [String], [Item {}])
+itemify (gen, (w, h), descs, items) =
+  --yech, different limits for w and h.
+  let (xrand, nextGen) = Generator.int32Range ((-1 * w), w) gen
+      (yrand, ds9) = Generator.int32Range (-1 * h, h) nextGen
+      (charColor, voyager) = randomColor ds9
+      (representation, enterprise) = randomListItem voyager (String.toList characters)
+  in (enterprise, (w, h), tail descs, items ++ 
+    [{ char = String.fromList [representation], 
+    description = (head descs), 
+    isKitten = False, xd = xrand, yd = yrand, cd = charColor }])
+
 --pass maximum/minimum to this function
 --(should bear some resemblance to the wrapping level, 
 --otherwise kitten may be tragically rendered offscreen and unreachable)
 makeItems : (Int) -> (Int, Int) -> [Item {}]
 makeItems numToMake (w, h) =
-  let (gen', _, nonKittenItems) = itemify (makeGen, rawItemList, [])
+  let (gen', _, _, nonKittenItems) = itemify (makeGen, (w, h), rawItemList, [])
   in (++) ([ { char = "#", description = kittenDescription,
      isKitten = True, xd = 2, yd = 2, cd = orange} ] ) 
     (take numToMake nonKittenItems)
 
-itemify : (Generator.Generator a, [String], [Item {}]) -> (Generator.Generator a, [String], [Item {}])
-itemify (gen, descs, items) =
-  let (randoms, gen') = Generator.listOf (Generator.int32Range (0,200)) 4 gen 
-  in (gen, tail descs, items ++ [{ char = "#", description = (head descs), 
-    isKitten = False, xd = head randoms, yd = last (take 2 randoms), cd = blue }])
 
 main
  =
-  let items = makeItems 10 (200, 200)
+  let items = makeItems 10 (10, 10)
   in lift2 render Window.dimensions (foldp step (robot, items) input)
+  --asText (makeItems 10 (0, 10))
 
 rawItemList : [ String ]
 rawItemList = [

@@ -125,14 +125,16 @@ randomColor gen =
 
 itemify : (Generator.Generator a, (Int, Int), [String], [Item {}]) -> (Generator.Generator a, (Int, Int), [String], [Item {}])
 itemify (gen, (w, h), descs, items) =
-  let (xrand, nextGen) = Generator.int32Range (-1 * w, w) gen
-      (yrand, ds9) = Generator.int32Range (-1 * h, h) nextGen
-      (charColor, voyager) = randomColor ds9
-      (representation, enterprise) = randomListItem voyager (String.toList characters) --randomize symbol
-      madeItem = [{ char = String.fromList [representation], description = (head descs),
-        isKitten = False, xd = xrand, yd = yrand, cd = charColor }]
-      (lastGen, _, _, moreItems) = itemify enterprise (w, h) (tail descs) (madeItem ++ items)
-  in (lastGen, (w, h), tail descs, moreItems)
+  if length descs == 0 then (gen, (w,h), [], items)
+  else
+    let (xrand, nextGen) = Generator.int32Range (-1 * w, w) gen
+        (yrand, ds9) = Generator.int32Range (-1 * h, h) nextGen
+        (charColor, voyager) = randomColor ds9
+        (representation, enterprise) = randomListItem voyager (String.toList characters) --randomize symbol
+        madeItem = [{ char = String.fromList [representation], description = (head descs),
+          isKitten = False, xd = xrand, yd = yrand, cd = charColor }]
+        tuple = (enterprise, (w, h), (tail descs), items ++ madeItem )
+    in itemify tuple
 
 randomListSubset : ([a], [a], Generator.Generator b, Int) -> ([a], [a],Generator.Generator b, Int) 
 randomListSubset (list, random, gen, howManyMore) =

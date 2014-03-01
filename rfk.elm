@@ -133,8 +133,7 @@ itemify (gen, (w, h), descs, items) =
         (representation, enterprise) = randomListItem voyager (String.toList characters) --randomize symbol
         madeItem = [{ char = String.fromList [representation], description = (head descs),
           isKitten = False, xd = xrand, yd = yrand, cd = charColor }]
-        tuple = (enterprise, (w, h), (tail descs), items ++ madeItem )
-    in itemify tuple
+    in itemify (enterprise, (w, h), (tail descs), items ++ madeItem )
 
 randomListSubset : ([a], [a], Generator.Generator b, Int) -> ([a], [a],Generator.Generator b, Int) 
 randomListSubset (list, random, gen, howManyMore) =
@@ -160,7 +159,7 @@ main
  =
   --let items = makeItems 10 (10, 10)
   --in lift2 render Window.dimensions (foldp step (robot, items) input)
-  asText (makeItems 10 (0, 10))
+  asText (makeItems 10 (10, 10))
 
 rawItemList : [ String ]
 rawItemList = [

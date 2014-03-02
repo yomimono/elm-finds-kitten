@@ -3,7 +3,7 @@ import Keyboard
 import List
 import Generator
 import Generator.Standard
-import JavaScript as JS
+import Time
 
 --todos:
 --actual collision detection (done)
@@ -18,6 +18,7 @@ type Colliding b = { b | collidingWith: String }
 robot = { char = "@", xd = 0, yd = 0, 
   description = "Robot, sans kitten.", collidingWith = "", 
   isKitten = False, cd = white }
+seed = -1
 characters = "$%^&*()qwertyuiop[]{}asdfghjkl;:zxcvbnm,.<>"
 kittenDescription = "You found kitten!  Good job, robot!"
   
@@ -107,8 +108,8 @@ input = --let delta = lift (\t -> t/20) (fps 25)
         --in sampleOn delta (lift2 (,) delta Keyboard.arrows)
         Keyboard.arrows
 
-makeGen : Int -> Generator.Generator Generator.Standard.Standard
-makeGen x = Generator.Standard.generator x
+makeGen : Signal Time -> Generator.Generator Generator.Standard.Standard
+makeGen x = lift Generator.Standard.generator (lift (floor inMilliseconds) x)
 
 randomListItem : Generator.Generator b -> [a] -> (a, Generator.Generator b)
 randomListItem gen list =
@@ -156,7 +157,7 @@ randomListSubset (list, random, gen, howManyMore) =
 --pass maximum/minimum to this function
 --(should bear some resemblance to the wrapping level, 
 --otherwise kitten may be tragically rendered offscreen and unreachable)
-makeItems : Int -> Int -> (Int, Int) -> [Item {}]
+makeItems : Int -> Signal Time -> (Int, Int) -> [Item {}]
 makeItems numToMake p (w, h) =
   let (gen', _, _, nonKittenItems) = itemify (makeGen p, (w, h), rawItemList, [])
       (_, randomizedItems, gen'', _) = randomListSubset (nonKittenItems, [], gen', numToMake)
@@ -164,10 +165,12 @@ makeItems numToMake p (w, h) =
      isKitten = True, xd = 2, yd = 2, cd = orange} ] ) 
     (randomizedItems)
 
+nextGen : (Int, Int) -> (Int, Generator.Generator) -> (Int, Generator.Generator)
+nextGen a (_, b) = Generator.int32Range a b
 
-main
- =
-  let items = makeItems 6 10 (10, 10)
+main : Signal Element
+main = 
+  let items = makeItems 6 (Time.every 10000000000) (10, 10)
   in lift2 render Window.dimensions (foldp step (robot, items) input)
   --asText ((makeItems 4 4 (10, 10)) ++ (makeItems 1 4 (5,5)))
 

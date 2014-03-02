@@ -3,6 +3,7 @@ import Keyboard
 import List
 import Generator
 import Generator.Standard
+import JavaScript as JS
 
 --todos:
 --actual collision detection (done)
@@ -147,8 +148,10 @@ randomListSubset (list, random, gen, howManyMore) =
   if length list < 1 then ([], random, gen, howManyMore)
   else 
     let (randomElement, gen') = randomListItem gen list
-    in (List.filter ((/=) randomElement) list, --don't duplicate elements
-        randomElement :: random, gen', howManyMore - 1)
+        nextList = List.filter ((/=) randomElement) list
+        (_, randomList, gen'', _) = randomListSubset (nextList, random, gen', howManyMore)
+    in (nextList, --don't duplicate elements
+        randomElement :: randomList, gen', howManyMore - 1)
 
 --pass maximum/minimum to this function
 --(should bear some resemblance to the wrapping level, 
@@ -164,9 +167,10 @@ makeItems numToMake p (w, h) =
 
 main
  =
-  --let items = makeItems 10 (10, 10)
-  --in lift2 render Window.dimensions (foldp step (robot, items) input)
-  asText ((makeItems 1 4 (10, 10)) ++ (makeItems 1 4 (5,5)))
+  let items = makeItems 6 10 (10, 10)
+  in lift2 render Window.dimensions (foldp step (robot, items) input)
+  --asText ((makeItems 4 4 (10, 10)) ++ (makeItems 1 4 (5,5)))
+
 
 rawItemList : [ String ]
 rawItemList = [

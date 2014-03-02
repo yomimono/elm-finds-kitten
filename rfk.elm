@@ -140,7 +140,7 @@ itemify (gen, dim, descs, items) =
   else
     let (item, gen') = randomizeItem gen dim (head descs)
     in itemify (gen', dim, (tail descs), item :: items)
-    --(enterprise, (w, h), (tail descs), madeItem ++ items)
+    --in (gen', dim, (tail descs), item :: items)
 
 randomListSubset : ([a], [a], Generator.Generator b, Int) -> ([a], [a],Generator.Generator b, Int) 
 randomListSubset (list, random, gen, howManyMore) =
@@ -156,7 +156,7 @@ randomListSubset (list, random, gen, howManyMore) =
 makeItems : Int -> Int -> (Int, Int) -> [Item {}]
 makeItems numToMake p (w, h) =
   let (gen', _, _, nonKittenItems) = itemify (makeGen p, (w, h), rawItemList, [])
-      (_, randomizedItems, gen'', _) = randomListSubset (nonKittenItems, [], gen'', numToMake)
+      (_, randomizedItems, gen'', _) = randomListSubset (nonKittenItems, [], gen', numToMake)
   in (++) ([ { char = "#", description = kittenDescription,
      isKitten = True, xd = 2, yd = 2, cd = orange} ] ) 
     (randomizedItems)

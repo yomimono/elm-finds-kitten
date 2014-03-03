@@ -1,8 +1,6 @@
 module SimpleRandom where
 
 import Random
-import Generator as G 
-import Generator.Standard as GS
 import Time
 
 type Item a = { a | xd: Int, yd: Int } --2 values to randomize

@@ -1,9 +1,8 @@
 import Window
 import Keyboard
 import List
-import Generator
-import Generator.Standard
 import Time
+import Random
 
 --todos:
 --actual collision detection (done)
@@ -18,13 +17,16 @@ type Colliding b = { b | collidingWith: String }
 robot = { char = "@", xd = 0, yd = 0, 
   description = "Robot, sans kitten.", collidingWith = "", 
   isKitten = False, cd = white }
-seed = -1
+
+largeInterval : Time
+largeInterval = 1000 * 60 * 60 * 24 * 7 * 365 --update every year (non-leap ;) )
+
+characters : String
 characters = "$%^&*()qwertyuiop[]{}asdfghjkl;:zxcvbnm,.<>"
+
+kittenDescription : String
 kittenDescription = "You found kitten!  Good job, robot!"
   
-fontify : Color -> String -> Text
-fontify col x = Text.color col ( monospace ( toText x) )
-
 samePlace : Item a -> Item b -> Bool
 samePlace robot item = robot.xd == item.xd && robot.yd == item.yd
 
@@ -44,30 +46,6 @@ getMessage r = Text.text (fontify white r.collidingWith)
 
 kittenFound : Colliding a -> Bool
 kittenFound r = r.collidingWith == kittenDescription
-
-drawRobot : Element
-drawRobot = Text.text (fontify gray "[-]   \n(+)=C \n| | \n000 ")
-
-drawHeart : Element
-drawHeart = Text.text (fontify red ".::. .::.\n:::::::::\n \':::::\'\n  \':::\'")
-
-drawKitten : Element
-drawKitten = Text.text (fontify orange (" |\\_/|\n |0 0|__\n =-*-=  \\\nc_c__(___)"))
-
-foundAnimation : (Int, Int) -> Colliding (Item {}) -> Element
-foundAnimation (w,h) robot = 
-    collage w h [
-      filled black (rect (toFloat w) (toFloat h))
-      , toForm (flow right [ drawRobot, drawHeart, drawKitten ]),
-      move (nextPoint (robot.xd, robot.yd - 5) (w, h) (Text.text (fontify white robot.char))) 
-            (toForm (getMessage robot))
-    ]
-
-drawItemForm : Element -> (Int, Int) -> Item a -> Form
-drawItemForm roboElem (w, h) item = 
-    move (nextPoint (item.xd, item.yd) (w, h) roboElem) 
-         (toForm (Text.text (fontify item.cd item.char)))
-
 
 nextPoint : (Int, Int) -> (Int, Int) -> Element -> (Float, Float)
 nextPoint (x, y) (w', h') roboElem =
@@ -108,65 +86,59 @@ input = --let delta = lift (\t -> t/20) (fps 25)
         --in sampleOn delta (lift2 (,) delta Keyboard.arrows)
         Keyboard.arrows
 
-makeGen : Signal Time -> Generator.Generator Generator.Standard.Standard
-makeGen x = lift Generator.Standard.generator (lift (floor inMilliseconds) x)
+initialSeed : Signal Int 
+initialSeed = lift floor (every largeInterval)
 
-randomListItem : Generator.Generator b -> [a] -> (a, Generator.Generator b)
-randomListItem gen list =
-  if | length list == 1 -> (head list, gen)
-     | otherwise -> 
-       let (index, gen') = Generator.int32Range (1, length list) gen
-       in (last (take index list), gen')
+makeItem : Int -> Int -> Color -> String -> Item {}
+makeItem x y col sym = 
+  { xd = x, yd = y, cd = col, char = sym }
 
-randomColor : Generator.Generator b -> (Color, Generator.Generator b)
-randomColor gen =
-  let colorGenerator = Generator.int32Range (0, 255)
-      (r, nextGen) = colorGenerator gen
-      (g, ds9) = colorGenerator nextGen
-      (b, voyager) = colorGenerator ds9
-  in (rgb r g b , voyager)
-
-randomizeItem : Generator.Generator a -> (Int, Int) -> String -> (Item {}, Generator.Generator a)
-randomizeItem gen (w, h) desc =
-  let (xrand, nextGen) = Generator.int32Range (-1 * w, w) gen
-      (yrand, ds9) = Generator.int32Range (-1 * h, h) nextGen
-      (charColor, voyager) = randomColor ds9
-      (representation, enterprise) = randomListItem voyager (String.toList characters) --randomize symbol
-      madeItem = { char = String.fromList [representation], description = desc,
-        isKitten = False, xd = xrand, yd = yrand, cd = charColor }
-  in (madeItem, enterprise)
-
-itemify : (Generator.Generator a, (Int, Int), [String], [Item {}]) -> (Generator.Generator a, (Int, Int), [String], [Item {}])
-itemify (gen, dim, descs, items) =
-  if length descs == 0 then (gen, dim, descs, items)
-  else
-    let (item, gen') = randomizeItem gen dim (head descs)
-    in itemify (gen', dim, (tail descs), item :: items)
-    --in (gen', dim, (tail descs), item :: items)
-
-randomListSubset : ([a], [a], Generator.Generator b, Int) -> ([a], [a],Generator.Generator b, Int) 
-randomListSubset (list, random, gen, howManyMore) =
-  if length list < 1 then ([], random, gen, howManyMore)
+makeSomeRandomItems : Int -> Signal Int -> [Signal (Item {})]
+makeSomeRandomItems howMany seed =
+  if howMany == 0 then []
   else 
-    let (randomElement, gen') = randomListItem gen list
+    let x = Random.range 0 200 seed
+        y = Random.range 0 200 seed
+        col = randomColor seed
+        char = String.fromList [randomListItem seed (String.toList characters)]
+    in (lift4 makeItem x y col char) :: (makeSomeRandomItems (howMany - 1) seed)
+
+index : Int -> [a] -> a
+index number list = 
+  last (take number list)
+
+randomListItem : Signal Int -> [Signal a] -> Signal a
+randomListItem gen list =
+  if length list == 1 then (head list)
+  else 
+    let randomIndex = (Random.range 1 (length list) gen)
+    in lift2 index randomIndex (combine list)
+    
+randomColor : Signal Int -> Signal Color
+randomColor seed =
+  let colorGenerator = Random.range 0 255 seed
+  in lift3 rgb colorGenerator colorGenerator colorGenerator
+
+randomListSubset : ([a], [Signal a], Signal Int) -> ([a], [Signal a], Signal Int) 
+randomListSubset (list, random, gen) =
+  if length list < 1 then ([], random, gen)
+  else 
+    let randomElement = randomListItem gen list
         nextList = List.filter ((/=) randomElement) list
-        (_, randomList, gen'', _) = randomListSubset (nextList, random, gen', howManyMore)
+        (_, randomList, _) = randomListSubset (nextList, random, gen)
     in (nextList, --don't duplicate elements
-        randomElement :: randomList, gen', howManyMore - 1)
+        randomElement :: randomList, gen)
 
 --pass maximum/minimum to this function
 --(should bear some resemblance to the wrapping level, 
 --otherwise kitten may be tragically rendered offscreen and unreachable)
 makeItems : Int -> Signal Time -> (Int, Int) -> [Item {}]
 makeItems numToMake p (w, h) =
-  let (gen', _, _, nonKittenItems) = itemify (makeGen p, (w, h), rawItemList, [])
-      (_, randomizedItems, gen'', _) = randomListSubset (nonKittenItems, [], gen', numToMake)
+  let nonKittenItems = makeSomeRandomItems p numToMake
+      (_, randomizedItems, gen'') = randomListSubset (nonKittenItems, [], p)
   in (++) ([ { char = "#", description = kittenDescription,
      isKitten = True, xd = 2, yd = 2, cd = orange} ] ) 
     (randomizedItems)
-
-nextGen : (Int, Int) -> (Int, Generator.Generator) -> (Int, Generator.Generator)
-nextGen a (_, b) = Generator.int32Range a b
 
 main : Signal Element
 main = 
@@ -174,7 +146,34 @@ main =
   in lift2 render Window.dimensions (foldp step (robot, items) input)
   --asText ((makeItems 4 4 (10, 10)) ++ (makeItems 1 4 (5,5)))
 
+--several convenience functions for drawing stuff
+fontify : Color -> String -> Text
+fontify col x = Text.color col ( monospace ( toText x) )
 
+drawRobot : Element
+drawRobot = Text.text (fontify gray "[-]   \n(+)=C \n| | \n000 ")
+
+drawHeart : Element
+drawHeart = Text.text (fontify red ".::. .::.\n:::::::::\n \':::::\'\n  \':::\'")
+
+drawKitten : Element
+drawKitten = Text.text (fontify orange (" |\\_/|\n |0 0|__\n =-*-=  \\\nc_c__(___)"))
+
+foundAnimation : (Int, Int) -> Colliding (Item {}) -> Element
+foundAnimation (w,h) robot = 
+    collage w h [
+      filled black (rect (toFloat w) (toFloat h))
+      , toForm (flow right [ drawRobot, drawHeart, drawKitten ]),
+      move (nextPoint (robot.xd, robot.yd - 5) (w, h) (Text.text (fontify white robot.char))) 
+            (toForm (getMessage robot))
+    ]
+
+drawItemForm : Element -> (Int, Int) -> Item a -> Form
+drawItemForm roboElem (w, h) item = 
+    move (nextPoint (item.xd, item.yd) (w, h) roboElem) 
+         (toForm (Text.text (fontify item.cd item.char)))
+
+--huge list of things that aren't kitten.
 rawItemList : [ String ]
 rawItemList = [
   "\"I pity the fool who mistakes me for kitten!\", sez Mr. T."

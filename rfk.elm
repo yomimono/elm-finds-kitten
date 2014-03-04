@@ -166,7 +166,7 @@ makeItems numToMake p (w, h) =
 
 main
  =
-  let items = makeItems 6 10 (10, 10)
+  let items = makeItems 15 32 (10, 10)
   in lift2 render Window.dimensions (foldp step (robot, items) input)
   --asText ((makeItems 4 4 (10, 10)) ++ (makeItems 1 4 (5,5)))
 

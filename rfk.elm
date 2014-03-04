@@ -3,26 +3,17 @@ import Keyboard
 import List
 import Time
 import Random
+import open SimpleRandom
 
 --todos:
---actual collision detection (done)
 --randomly placed objects
 --vi key navigation
---endgame detection (done)
 --endgame animation (done)
---edge detection (done?)
 
-type Item a = { a | char:String, description:String, xd:Int, yd:Int, cd:Color, isKitten:Bool }
 type Colliding b = { b | collidingWith: String }
 robot = { char = "@", xd = 0, yd = 0, 
   description = "Robot, sans kitten.", collidingWith = "", 
   isKitten = False, cd = white }
-
-largeInterval : Time
-largeInterval = 1000 * 60 * 60 * 24 * 7 * 365 --update every year (non-leap ;) )
-
-characters : String
-characters = "$%^&*()qwertyuiop[]{}asdfghjkl;:zxcvbnm,.<>"
 
 kittenDescription : String
 kittenDescription = "You found kitten!  Good job, robot!"
@@ -73,9 +64,9 @@ updatePosition r (x, y) = {r | xd <- r.xd + x, yd <- r.yd + y}
 removeCollision : Colliding a -> Colliding a
 removeCollision r = { r | collidingWith <- ""}
 
-step : {x:Int, y:Int} -> (Colliding(Item {}), [Item {}]) -> (Colliding(Item {}), [Item {}])
+step : {x:Int, y:Int} -> (Colliding(Described(Item {})), [Described(Item {})]) -> (Colliding(Described(Item {})), [Described(Item {})])
 step {x, y} (({xd, yd, collidingWith} as r), items) = 
-  if x /= 0 || y /= 0 then
+  if x /= 0 || y /= 0 || kittenFound r then
     case (collision (updatePosition r (x, y)) items) of
       Just otherItem -> ({ r | collidingWith <- otherItem.description }, items)
       Nothing -> (updatePosition (removeCollision r) (x, y), items)
@@ -85,39 +76,6 @@ input : Signal {x:Int, y:Int}
 input = --let delta = lift (\t -> t/20) (fps 25)
         --in sampleOn delta (lift2 (,) delta Keyboard.arrows)
         Keyboard.arrows
-
-initialSeed : Signal Int 
-initialSeed = lift floor (every largeInterval)
-
-makeItem : Int -> Int -> Color -> String -> Item {}
-makeItem x y col sym = 
-  { xd = x, yd = y, cd = col, char = sym }
-
-makeSomeRandomItems : Int -> Signal Int -> [Signal (Item {})]
-makeSomeRandomItems howMany seed =
-  if howMany == 0 then []
-  else 
-    let x = Random.range 0 200 seed
-        y = Random.range 0 200 seed
-        col = randomColor seed
-        char = String.fromList [randomListItem seed (String.toList characters)]
-    in (lift4 makeItem x y col char) :: (makeSomeRandomItems (howMany - 1) seed)
-
-index : Int -> [a] -> a
-index number list = 
-  last (take number list)
-
-randomListItem : Signal Int -> [Signal a] -> Signal a
-randomListItem gen list =
-  if length list == 1 then (head list)
-  else 
-    let randomIndex = (Random.range 1 (length list) gen)
-    in lift2 index randomIndex (combine list)
-    
-randomColor : Signal Int -> Signal Color
-randomColor seed =
-  let colorGenerator = Random.range 0 255 seed
-  in lift3 rgb colorGenerator colorGenerator colorGenerator
 
 randomListSubset : ([a], [Signal a], Signal Int) -> ([a], [Signal a], Signal Int) 
 randomListSubset (list, random, gen) =
@@ -132,9 +90,9 @@ randomListSubset (list, random, gen) =
 --pass maximum/minimum to this function
 --(should bear some resemblance to the wrapping level, 
 --otherwise kitten may be tragically rendered offscreen and unreachable)
-makeItems : Int -> Signal Time -> (Int, Int) -> [Item {}]
+makeItems : Int -> Signal Time -> (Int, Int) -> Signal [Described(Item {})]
 makeItems numToMake p (w, h) =
-  let nonKittenItems = makeSomeRandomItems p numToMake
+  let nonKittenItems = makeSomeRandomItems p numToMake --nonKittenItems : [Signal (Item {})]
       (_, randomizedItems, gen'') = randomListSubset (nonKittenItems, [], p)
   in (++) ([ { char = "#", description = kittenDescription,
      isKitten = True, xd = 2, yd = 2, cd = orange} ] ) 

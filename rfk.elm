@@ -145,11 +145,11 @@ itemify (gen, dim, descs, items) =
 
 randomListSubset : ([a], [a], Generator.Generator b, Int) -> ([a], [a],Generator.Generator b, Int) 
 randomListSubset (list, random, gen, howManyMore) =
-  if length list < 1 then ([], random, gen, howManyMore)
+  if (length list < 1 || howManyMore == 0) then ([], random, gen, howManyMore)
   else 
     let (randomElement, gen') = randomListItem gen list
         nextList = List.filter ((/=) randomElement) list
-        (_, randomList, gen'', _) = randomListSubset (nextList, random, gen', howManyMore)
+        (_, randomList, gen'', _) = randomListSubset (nextList, random, gen', howManyMore - 1)
     in (nextList, --don't duplicate elements
         randomElement :: randomList, gen', howManyMore - 1)
 

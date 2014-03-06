@@ -30,7 +30,7 @@ collision robot items =
 --based on whether our robot's just investigated something and hasn't yet 
 --moved away.
 getMessage : Colliding a -> Element
-getMessage r = Text.text (fontify white r.collidingWith)
+getMessage r = Text.text (bold (fontify white r.collidingWith))
 
 kittenFound : Colliding a -> Bool
 kittenFound r = r.collidingWith == KittenConstants.kittenDescription
@@ -56,7 +56,8 @@ drawItemForm roboElem (w, h) item =
 
 nextPoint : (Int, Int) -> (Int, Int) -> Element -> (Float, Float)
 nextPoint (x, y) (w', h') roboElem =
-  let (nextX, nextY) = (toFloat ((widthOf roboElem) * x), toFloat ((heightOf roboElem) * y))
+  let (nextX, nextY) = (toFloat ((widthOf roboElem) * x), 
+                        toFloat ((heightOf roboElem) * y))
       (w, h) = (toFloat w', toFloat h')
   in 
     if | nextX*2 > w -> (nextX - w, nextY)

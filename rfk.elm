@@ -1,6 +1,7 @@
 import Window
 import Keyboard
 import List
+import Char
 import Generator
 import Generator.Standard
 import JavaScript as JS
@@ -102,10 +103,14 @@ step {x, y} (({xd, yd, collidingWith} as r), items) =
       Nothing -> (updatePosition (removeCollision r) (x, y), items)
   else (r, items)
 
+viKeys : Signal { x:Int, y:Int}
+viKeys =
+  Keyboard.directions (Char.toCode 'K') (Char.toCode 'J') (Char.toCode 'H') (Char.toCode 'L')
+
 input : Signal {x:Int, y:Int}
 input = --let delta = lift (\t -> t/20) (fps 25)
         --in sampleOn delta (lift2 (,) delta Keyboard.arrows)
-        Keyboard.arrows
+        merges [Keyboard.arrows, Keyboard.wasd, viKeys]
 
 makeGen : Int -> Generator.Generator Generator.Standard.Standard
 makeGen x = Generator.Standard.generator x
@@ -166,7 +171,7 @@ makeItems numToMake p (w, h) =
 
 main
  =
-  let items = makeItems 15 32 (10, 10)
+  let items = makeItems 25 32 (15, 15)
   in lift2 render Window.dimensions (foldp step (robot, items) input)
   --asText ((makeItems 4 4 (10, 10)) ++ (makeItems 1 4 (5,5)))
 

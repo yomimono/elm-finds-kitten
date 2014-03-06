@@ -214,7 +214,7 @@ rawItemList = [
   ,"It's Kieran Hervold.  Damn dyslexia!"
   ,"A non-descript box of crackers."
   ,"Carbonated Water, High Fructose Corn Syrup, Color, Phosphoric Acid, Flavors, Caffeine."
-  ,"Move along! Nothing to see here!\""
+  ,"\"Move along! Nothing to see here!\""
   ,"It's the embalmed corpse of Vladimir Lenin."
   ,"A coupon for one free steak-fish at your local family diner."
   ,"A set of keys to a 2001 Rolls Royce. Worthless."

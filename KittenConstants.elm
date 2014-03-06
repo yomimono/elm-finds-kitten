@@ -16,7 +16,12 @@ drawRobot = Text.text (
    )
 
 drawHeart : Element
-drawHeart = Text.text (fontify red ".::. .::.\n:::::::::\n \':::::\'\n  \':::\'")
+drawHeart = Text.text (
+   (fontify red ".::. .::.\n") ++ 
+   (fontify red ":::::::::\n") ++ 
+   (fontify red " \':::::\'\n") ++ 
+   (fontify red "  \':::\'")
+  )
 
 drawKitten : Element
 drawKitten = Text.text (
@@ -364,4 +369,5 @@ rawItemList = [
   ,"Just a man selling an albatross." 
   ,"The intermission from a 1930s silent movie."
   ,"It's an inverted billiard ball!"
-  ,"The spectre of Sherlock Holmes wills you onwards." ]
+  ,"The spectre of Sherlock Holmes wills you onwards."
+  ,"An Apple ][, drawing a kitten on an endless loop." ]

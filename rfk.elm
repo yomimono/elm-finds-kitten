@@ -144,10 +144,17 @@ randomListSubset (list, random, gen, howManyMore) =
     in (nextList, --don't duplicate elements
         randomElement :: randomList, gen', howManyMore - 1)
 
+charDims : (Int, Int)
+charDims = 
+  let sampleChar = (Text.text (monospace (toText "@")))
+  in (widthOf sampleChar, heightOf sampleChar)
+
+--w and h come as the number of pixels.
+--we want to give the largest index in (x,y).
 makeLimits : (Int, Int) -> (Int, Int)
-makeLimits (w, h) = --w and h come as the number of pixels.
-  --we want to give the largest index in (x,y).
-    (10, 10)
+makeLimits (w, h) = 
+  let (charWidth, charHeight) = charDims
+  in ((div (div w charWidth) 2) - 1, (div (div h charHeight) 2) - 1)
 
 --pass maximum/minimum to this function
 --(should bear some resemblance to the wrapping level, 

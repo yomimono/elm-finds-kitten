@@ -8,8 +8,8 @@ import JavaScript as JS
 
 --todos:
 --actual collision detection (done)
---randomly placed objects
---vi key navigation
+--randomly placed objects (done, kinda)
+--vi key navigation (done)
 --endgame detection (done)
 --endgame animation (done)
 --edge detection (done?)
@@ -165,9 +165,9 @@ makeItems : Int -> Int -> (Int, Int) -> [Item {}]
 makeItems numToMake p (w, h) =
   let (gen', _, _, nonKittenItems) = itemify (makeGen p, (w, h), rawItemList, [])
       (_, randomizedItems, gen'', _) = randomListSubset (nonKittenItems, [], gen', numToMake)
-  in (++) ([ { char = "#", description = kittenDescription,
-     isKitten = True, xd = 2, yd = 2, cd = orange} ] ) 
-    (randomizedItems)
+      (lastGen, _, _, (kitten'::[])) = itemify (gen'', (w, h), kittenDescription :: [], [])
+      kitten = { kitten' | isKitten <- True }
+  in kitten :: randomizedItems
 
 main
  =

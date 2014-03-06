@@ -78,8 +78,8 @@ nextPoint (x, y) (w', h') roboElem =
        | nextY*2 > h -> (nextX, nextY - h)
        | otherwise -> (nextX, nextY)
 
-render : (Int, Int) -> (Colliding (Item {}), [Item a]) -> Element
-render (w, h) (robot, items) =
+render : (Int, Int) -> (Colliding (Item {})) -> [Item a] -> Element
+render (w, h) robot items =
   let roboElem = Text.text ( fontify white robot.char )
   in case kittenFound robot of
     False -> collage w h ( (++) ([
@@ -95,13 +95,13 @@ updatePosition r (x, y) = {r | xd <- r.xd + x, yd <- r.yd + y}
 removeCollision : Colliding a -> Colliding a
 removeCollision r = { r | collidingWith <- ""}
 
-step : {x:Int, y:Int} -> (Colliding(Item {}), [Item {}]) -> (Colliding(Item {}), [Item {}])
-step {x, y} (({xd, yd, collidingWith} as r), items) = 
+step : ({x:Int, y:Int}, [Item {}]) -> Colliding(Item {}) -> Colliding(Item {})
+step ({x, y}, items) ({xd, yd, collidingWith} as r) = 
   if x /= 0 || y /= 0 then
     case (collision (updatePosition r (x, y)) items) of
-      Just otherItem -> ({ r | collidingWith <- otherItem.description }, items)
-      Nothing -> (updatePosition (removeCollision r) (x, y), items)
-  else (r, items)
+      Just otherItem -> { r | collidingWith <- otherItem.description }
+      Nothing -> updatePosition (removeCollision r) (x, y)
+  else r
 
 viKeys : Signal { x:Int, y:Int}
 viKeys =
@@ -158,21 +158,32 @@ randomListSubset (list, random, gen, howManyMore) =
     in (nextList, --don't duplicate elements
         randomElement :: randomList, gen', howManyMore - 1)
 
+makeLimits : (Int, Int) -> (Int, Int)
+makeLimits (w, h) = --w and h come as the number of pixels.
+  --we want to give the largest index in (x,y).
+    (10, 10)
+
 --pass maximum/minimum to this function
 --(should bear some resemblance to the wrapping level, 
 --otherwise kitten may be tragically rendered offscreen and unreachable)
-makeItems : Int -> Int -> (Int, Int) -> [Item {}]
-makeItems numToMake p (w, h) =
+makeItems : Int -> (Int, Int) -> Int -> [Item {}]
+makeItems p (w, h) numToMake = 
   let (gen', _, _, nonKittenItems) = itemify (makeGen p, (w, h), rawItemList, [])
       (_, randomizedItems, gen'', _) = randomListSubset (nonKittenItems, [], gen', numToMake)
       (lastGen, _, _, (kitten'::[])) = itemify (gen'', (w, h), kittenDescription :: [], [])
       kitten = { kitten' | isKitten <- True }
   in kitten :: randomizedItems
 
+largeInterval : Time
+largeInterval = 1000 * 60 * 60 * 24 * 7 * 365 --update every year (non-leap ;) )
+
+initialSeed : Signal Int 
+initialSeed = lift floor (every largeInterval)
+
 main
  =
-  let items = makeItems 25 32 (15, 15)
-  in lift2 render Window.dimensions (foldp step (robot, items) input)
+  let items = makeItems <~ initialSeed ~ (lift makeLimits Window.dimensions) ~ (constant 25)
+  in render <~ Window.dimensions ~ (foldp step robot (lift2 (,) input items)) ~ items
   --asText ((makeItems 4 4 (10, 10)) ++ (makeItems 1 4 (5,5)))
 
 

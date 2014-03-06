@@ -30,7 +30,7 @@ collision robot items =
 --based on whether our robot's just investigated something and hasn't yet 
 --moved away.
 getMessage : Colliding a -> Element
-getMessage r = Text.text (bold (fontify white r.collidingWith))
+getMessage r = centered (bold (fontify white r.collidingWith))
 
 kittenFound : Colliding a -> Bool
 kittenFound r = r.collidingWith == KittenConstants.kittenDescription
@@ -67,10 +67,12 @@ nextPoint (x, y) (w', h') roboElem =
 render : (Int, Int) -> (Colliding (Item {})) -> [Item a] -> Element
 render (w, h) robot items =
   let roboElem = Text.text ( fontify white robot.char )
+      (limitX, limitY) = makeLimits (w, h)
+      upperLeft = (0, limitY + 1)
   in case kittenFound robot of
     False -> collage w h ( (++) ([
       filled black (rect (toFloat w) (toFloat h))
-      , move (nextPoint (robot.xd, robot.yd - 1) (w, h) roboElem) (toForm (getMessage robot)) 
+      , move (nextPoint upperLeft (w, h) roboElem) (toForm (getMessage robot)) 
       , move (nextPoint (robot.xd, robot.yd) (w, h) roboElem) (toForm roboElem)
     ]) (map (drawItemForm roboElem (w,h)) items))
     True -> foundAnimation (w, h) robot
@@ -173,7 +175,10 @@ largeInterval = 1000 * 60 * 60 * 24 * 7 * 365 --update every year (non-leap ;) )
 initialSeed : Signal Int 
 initialSeed = lift floor (every largeInterval)
 
+itemsToMake : (Int, Int) -> Int
+itemsToMake (x, y) = max 10 (div (x * y) 20000)
+
 main
  =
-  let items = makeItems <~ initialSeed ~ (lift makeLimits Window.dimensions) ~ (constant 25)
+  let items = makeItems <~ initialSeed ~ (lift makeLimits Window.dimensions) ~ (lift itemsToMake Window.dimensions)
   in render <~ Window.dimensions ~ (foldp step robot (lift2 (,) input items)) ~ items

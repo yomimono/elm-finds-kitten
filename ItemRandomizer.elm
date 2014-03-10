@@ -40,6 +40,7 @@ randomizeItem gen (w, h) desc =
       madeItem = { char = String.fromList [representation], description = desc,
         isKitten = False, xd = xrand, yd = yrand, cd = charColor }
   in (madeItem, enterprise)
+  
 itemify : (Generator.Generator a, (Int, Int), [String], [Item {}]) -> (Generator.Generator a, (Int, Int), [String], [Item {}])
 itemify (gen, dim, descs, items) =
   if length descs == 0 then (gen, dim, descs, items)

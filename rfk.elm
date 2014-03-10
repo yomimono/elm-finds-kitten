@@ -18,17 +18,11 @@ fontify col x = Text.color col ( monospace ( toText x) )
 samePlace : Item a -> Item b -> Bool
 samePlace robot item = robot.xd == item.xd && robot.yd == item.yd
 
---Determine the case where the robot is investigating an object.
---The robot shouldn't be able to collide with multiple things simultaneously,
---but if this does occur, we'll just take the first object.
 collision : Item b -> [Item a] -> Maybe (Item a)
 collision robot items = 
   let found = (List.filter (samePlace robot) items )
   in if List.isEmpty found then Nothing else Just (head found)
 
---convenience function for looking up what message ought to be displayed
---based on whether our robot's just investigated something and hasn't yet 
---moved away.
 getMessage : Colliding a -> Element
 getMessage r = centered (bold (fontify white r.collidingWith))
 
@@ -37,16 +31,16 @@ kittenFound r = r.collidingWith == KittenConstants.kittenDescription
 
 foundAnimation : (Int, Int) -> Colliding (Item {}) -> Element
 foundAnimation (w,h) robot = 
-    collage w h [
-      filled black (rect (toFloat w) (toFloat h))
-      , toForm (flow down [
-        (flow right [ 
-          KittenConstants.drawRobot, 
-          KittenConstants.drawHeart, 
-          KittenConstants.drawKitten 
-        ]),
-        getMessage robot] )
-    ]
+  collage w h [
+    filled black (rect (toFloat w) (toFloat h))
+    , toForm (flow down [
+      (flow right [ 
+        KittenConstants.drawRobot, 
+        KittenConstants.drawHeart, 
+        KittenConstants.drawKitten 
+      ]),
+      getMessage robot] )
+  ]
 
 drawItemForm : Element -> (Int, Int) -> Item a -> Form
 drawItemForm roboElem (w, h) item = 
@@ -77,18 +71,21 @@ render (w, h) robot items =
     ]) (map (drawItemForm roboElem (w,h)) items))
     True -> foundAnimation (w, h) robot
 
-updatePosition : Item a -> (Int, Int) -> Item a
-updatePosition r (x, y) = {r | xd <- r.xd + x, yd <- r.yd + y}
+updatePosition : Item a -> (Int, Int) -> (Int, Int) -> Item a
+updatePosition r (x, y) windowDimensions = 
+  let (xMin, yMin) = makeLimits windowDimensions
+  in {r | xd <- (clamp ((-1) * xMin) (abs xMin) (r.xd + x))
+        , yd <- (clamp ((-1) * yMin) (abs yMin) (r.yd + y))}
 
 removeCollision : Colliding a -> Colliding a
 removeCollision r = { r | collidingWith <- ""}
 
-step : ({x:Int, y:Int}, [Item {}]) -> Colliding(Item {}) -> Colliding(Item {})
-step ({x, y}, items) ({xd, yd, collidingWith} as r) = 
+step : ({x:Int, y:Int}, (Int, Int), [Item {}]) -> Colliding(Item {}) -> Colliding(Item {})
+step ({x, y}, windowDimensions,  items) ({xd, yd, collidingWith} as r) = 
   if (not (kittenFound r)) && (x /= 0 || y /= 0) then
-    case (collision (updatePosition r (x, y)) items) of
+    case (collision (updatePosition r (x, y) windowDimensions) items) of
       Just otherItem -> { r | collidingWith <- otherItem.description }
-      Nothing -> updatePosition (removeCollision r) (x, y)
+      Nothing -> updatePosition (removeCollision r) (x, y) windowDimensions
   else r
 
 viKeys : Signal { x:Int, y:Int}
@@ -113,7 +110,11 @@ makeLimits (w, h) =
 itemsToMake : (Int, Int) -> Int
 itemsToMake (x, y) = max 10 (div (x * y) 20000)
 
+make3tuple : a -> b -> c -> (a, b, c)
+make3tuple x y z = (x, y, z)
+
+main : Signal Element
 main
  =
   let items = makeItems <~ initialSeed ~ (lift makeLimits Window.dimensions) ~ (lift itemsToMake Window.dimensions)
-  in render <~ Window.dimensions ~ (foldp step robot (lift2 (,) input items)) ~ items
+  in render <~ Window.dimensions ~ (foldp step robot (lift3 make3tuple input Window.dimensions items)) ~ items

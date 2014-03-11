@@ -16,6 +16,14 @@ largeInterval = 1000 * 60 * 60 * 24 * 7 * 365 --update every year (non-leap ;) )
 initialSeed : Signal Int 
 initialSeed = lift floor (every largeInterval)
 
+populatedLocations : [Item {}] -> [(Int, Int)]
+populatedLocations items =
+  if | length items == 0 -> []
+     | length items == 1 -> [((head items).xd, (head items).yd)]
+     | otherwise ->
+         let first = head items
+         in (first.xd, first.yd) :: populatedLocations (tail items)
+
 randomListItem : Generator.Generator b -> [a] -> (a, Generator.Generator b)
 randomListItem gen list =
   if | length list == 1 -> (head list, gen)
@@ -31,11 +39,18 @@ randomColor gen =
       (b, voyager) = colorGenerator ds9
   in (rgb r g b , voyager)
 
-randomizeItem : Generator.Generator a -> (Int, Int) -> String -> (Item {}, Generator.Generator a)
-randomizeItem gen (w, h) desc =
+randomLocation : Generator.Generator a -> (Int, Int) -> [(Int, Int)] -> ((Int, Int), Generator.Generator a)
+randomLocation gen (w, h) avoid =
   let (xrand, nextGen) = Generator.int32Range (-1 * w, w) gen
       (yrand, ds9) = Generator.int32Range (-1 * h, h) nextGen
-      (charColor, voyager) = randomColor ds9
+  in if (any ((==) (xrand, yrand)) avoid) 
+     then randomLocation ds9 (w, h) avoid --try again until we get an unpopulated location
+     else ((xrand, yrand), ds9)
+
+randomizeItem : Generator.Generator a -> (Int, Int) -> [(Int, Int)] -> String -> (Item {}, Generator.Generator a)
+randomizeItem gen (w, h) avoid desc =
+  let ((xrand, yrand), nextGen) = randomLocation gen (w, h) avoid
+      (charColor, voyager) = randomColor nextGen
       (representation, enterprise) = randomListItem voyager (String.toList KittenConstants.characters) --randomize symbol
       madeItem = { char = String.fromList [representation], description = desc,
         isKitten = False, xd = xrand, yd = yrand, cd = charColor }
@@ -45,7 +60,7 @@ itemify : (Generator.Generator a, (Int, Int), [String], [Item {}]) -> (Generator
 itemify (gen, dim, descs, items) =
   if length descs == 0 then (gen, dim, descs, items)
   else
-    let (item, gen') = randomizeItem gen dim (head descs)
+    let (item, gen') = randomizeItem gen dim (populatedLocations items) (head descs)
     in itemify (gen', dim, (tail descs), item :: items)
 
 randomListSubset : ([a], [a], Generator.Generator b, Int) -> ([a], [a],Generator.Generator b, Int) 

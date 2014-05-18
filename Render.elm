@@ -12,9 +12,9 @@ fontify : Color -> String -> Text
 fontify col x = Text.color col <| monospace <| toText x
 
 nextPoint : (Int, Int) -> (Int, Int) -> Element -> (Float, Float)
-nextPoint (x, y) (w', h') roboElem =
-  let (nextX, nextY) = (toFloat ((widthOf roboElem) * x), 
-                        toFloat ((heightOf roboElem) * y))
+nextPoint (x, y) (w', h') char =
+  let (nextX, nextY) = (toFloat ((widthOf char) * x), 
+                        toFloat ((heightOf char) * y))
       (w, h) = (toFloat w', toFloat h')
   in 
     if | nextX*2 > w -> (nextX - w, nextY)

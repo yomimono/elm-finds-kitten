@@ -8,9 +8,9 @@ type Item a = { a | char:String, description:String, xd:Int, yd:Int, cd:Color, i
 type Colliding b = { b | collidingWith: String }
 
 type State = {
+   playingField: (Int, Int),
    player: Colliding (Item {}),
-   items: [Item {}],
-   playingField: (Int, Int)
+   items: [Item {}]
 }
 
 type Controls = {
@@ -19,6 +19,7 @@ type Controls = {
 
 type Input = {
    controls: Controls,
+   playingField: (Int, Int),
    randomElements: [Int] --a long list of ints from which to generate random colors, positions, symbols, etc
 }
 

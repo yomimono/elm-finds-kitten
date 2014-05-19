@@ -2,6 +2,15 @@ module KittenConstants where
 
 characters = String.toList "$%^&*()qwertyuiop[]{}asdfghjkl;:zxcvbnm,.<>"
 kittenDescription = "\nYou found kitten!  Way to go, robot."
+programName = "robotfindskitten"
+repoLink = "https://github.com/yomimono/elm-finds-kitten"
+repoString = "information on this port"
+rfkLink = "http://robotfindskitten.org" 
+rfkString = "information on robotfindskitten"
+instructions = "In this game, you are robot (#). Your job is to find kitten. This task
+is complicated by the existence of various things which are not kitten.
+Robot must touch items to determine if they are kitten or not. The game
+ends when robotfindskitten.\nOn a keyboard, the arrow keys, WASD, and HJKL move robot.  Press any key to begin."
 
 --cribbed from the python implementation.
 rawItemList : [ String ]

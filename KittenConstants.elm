@@ -3,6 +3,7 @@ module KittenConstants where
 characters = String.toList "$%^&*()qwertyuiop[]{}asdfghjkl;:zxcvbnm,.<>"
 kittenDescription = "\nYou found kitten!  Way to go, robot."
 programName = "robotfindskitten"
+programVersion = "version lambda step signal spacejam"
 repoLink = "https://github.com/yomimono/elm-finds-kitten"
 repoString = "information on this port"
 rfkLink = "http://robotfindskitten.org" 

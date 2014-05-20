@@ -4,7 +4,7 @@ import Window
 import List
 import Char
 import GameLogic (kittenFound)
-import InputModel (Item, State)
+import InputModel (GamePiece, State)
 import KittenConstants (programName, repoLink, repoString, rfkLink, rfkString, kittenDescription, instructions)
 import TextField (toCartesianLimits, makeLimits)
 
@@ -21,7 +21,7 @@ nextPoint (x, y) (w', h') char =
        | nextY*2 > h -> (nextX, nextY - h)
        | otherwise -> (nextX, nextY)
 
-drawItemForm : (Int, Int) -> Item a -> Form
+drawItemForm : (Int, Int) -> GamePiece a -> Form
 drawItemForm (w, h) item = 
     let element = Text.centered <| fontify item.cd item.char in
     move (nextPoint (item.xd, item.yd) (w, h) element) (toForm element)
@@ -30,11 +30,12 @@ getMessage : String -> Element
 getMessage r = centered (bold (fontify white r))
 
 drawRobot : Element
-drawRobot = Text.centered (
-     (fontify darkBlue "[-]   \n(") ++ (fontify darkRed "+") ++
+drawRobot = Text.leftAligned (
+     (fontify darkBlue "[-] \n(") ++ 
+     (fontify darkRed "+") ++
      (fontify darkBlue ")") ++ 
-     (fontify darkGreen "=C ") ++ 
-     (fontify darkBlue "\n| | \n") ++ 
+     (fontify darkGreen "=C \n") ++ 
+     (fontify darkBlue "| | \n") ++ 
      (fontify gray "000 ")
    )
 
@@ -42,12 +43,12 @@ drawHeart : Element
 drawHeart = Text.centered (
    (fontify red ".::. .::.\n") ++ 
    (fontify red ":::::::::\n") ++ 
-   (fontify red " \':::::\'\n") ++ 
-   (fontify red "  \':::\'")
+   (fontify red "\':::::\'\n") ++ 
+   (fontify red "\':::\'")
   )
 
 drawKitten : Element
-drawKitten = Text.centered (
+drawKitten = Text.leftAligned(
       (fontify orange " |\\_/|\n |") ++ 
       (fontify green "0 0") ++ 
       (fontify orange "|___\n ") ++ 

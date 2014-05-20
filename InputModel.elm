@@ -4,15 +4,17 @@ import Char
 import Keyboard
 import Random
 
-type Item a = { a | char:String, description:String, xd:Int, yd:Int, cd:Color, isKitten:Bool }
+type GamePiece gp = { gp | char:String, xd:Int, yd:Int, cd:Color }
+
+type Item a = { a | description:String, isKitten:Bool }
 
 type Colliding b = { b | collidingWith: String }
 
 type State = {
    actionTaken: Bool,
    playingField: (Int, Int),
-   player: Colliding (Item {}),
-   items: [Item {}]
+   player: Colliding (GamePiece {}),
+   items: [Item (GamePiece {})]
 }
 
 type Controls = {

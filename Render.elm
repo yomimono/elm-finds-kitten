@@ -5,7 +5,7 @@ import List
 import Char
 import GameLogic (kittenFound)
 import InputModel (GamePiece, State)
-import KittenConstants (programName, repoLink, repoString, rfkLink, rfkString, kittenDescription, instructions)
+import KittenConstants (programName, programVersion, repoLink, repoString, rfkLink, rfkString, kittenDescription, instructions)
 import TextField (toCartesianLimits, makeLimits)
 
 fontify : Color -> String -> Text
@@ -70,21 +70,18 @@ foundAnimation (w, h) =
         getMessage kittenDescription])
      ]
 
-showIntroScreen : (Int, Int) -> Element
-showIntroScreen (w, h) = 
-    collage w h [
-      filled black <| rect (toFloat w) (toFloat h)
-      , toForm (flow down [
-          Text.leftAligned (fontify white programName)
-          , link repoLink (Text.leftAligned <| fontify green repoString)
-          , link rfkLink (Text.leftAligned <| fontify green rfkString)
-          , Text.leftAligned (fontify white instructions)
-      ])
-    ]
+showIntroScreen : Element
+showIntroScreen = 
+      flow down [
+          Text.leftAligned (fontify black (programName ++ " " ++ programVersion))
+          , link repoLink (Text.leftAligned <| fontify blue repoString)
+          , link rfkLink (Text.leftAligned <| fontify blue rfkString)
+          , Text.leftAligned (fontify black instructions)
+      ]
 
 render : State -> Element
 render { actionTaken, playingField, player, items } = 
-  if actionTaken == False then showIntroScreen playingField else  
+  if actionTaken == False then showIntroScreen else  
   let (w, h) = playingField
       robot = player
       roboElem = Text.centered ( fontify white robot.char )

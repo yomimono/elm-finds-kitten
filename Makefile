@@ -1,11 +1,11 @@
 ELM=elm
 BUILDDIR="build/"
-ELM_RUNTIME=~/.cabal/share/Elm-0.12/elm-runtime.js
+ELM_RUNTIME=`$(ELM) -g`
 
 all : rfk
 
 rfk : 
-	$(ELM) --make -r "elm-runtime.js" -b $(BUILDDIR) rfk.elm
+	$(ELM) --make -b $(BUILDDIR) rfk.elm
 	cp $(ELM_RUNTIME) $(BUILDDIR)
 
 clean :

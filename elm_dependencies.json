@@ -3,7 +3,8 @@
 , "description":
       "You are a robot in a field of objects, one of which is kitten.  Examining objects until kitten is found."
 , "license": "BSD3"
-, "repository": "http://github.com/yomimono/elm-finds-kitten"
+, "repository": "http://github.com/yomimono/elm-finds-kitten.git"
 , "elm-version": "0.12"
+, "exposed-modules":[]
 , "dependencies": { }
 }

@@ -1,5 +1,5 @@
 ELM=elm
-BUILDDIR=build
+BUILDDIR="build/"
 ELM_RUNTIME=~/.cabal/share/Elm-0.12/elm-runtime.js
 
 all : rfk

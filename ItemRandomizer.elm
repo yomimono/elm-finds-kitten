@@ -1,14 +1,13 @@
 module ItemRandomizer where
 
-import Generator
-import Generator.Standard
+import GameLogic (collision)
+import InputModel (GamePiece, Item)
+import TextField 
 import KittenConstants
-import List
 
-type Item a = { a | char:String, description:String, xd:Int, yd:Int, cd:Color, isKitten:Bool }
-
-makeGen : Int -> Generator.Generator Generator.Standard.Standard
-makeGen x = Generator.Standard.generator x
+type CommonProperties a = {
+  a | char:String, xd:Int, yd:Int, cd:Color
+}
 
 largeInterval : Time
 largeInterval = 1000 * 60 * 60 * 24 * 7 * 365 --update every year (non-leap ;) )
@@ -16,70 +15,51 @@ largeInterval = 1000 * 60 * 60 * 24 * 7 * 365 --update every year (non-leap ;) )
 initialSeed : Signal Int 
 initialSeed = lift floor (every largeInterval)
 
-populatedLocations : [Item {}] -> [(Int, Int)]
-populatedLocations items =
-  if | length items == 0 -> []
-     | length items == 1 -> [((head items).xd, (head items).yd)]
-     | otherwise ->
-         let first = head items
-         in (first.xd, first.yd) :: populatedLocations (tail items)
+removeIndex : Int -> [a] -> (a, [a])
+removeIndex index list =
+  let firstChunk = reverse (take index list)
+      lastChunk = drop index list
+      item = head firstChunk
+      remaining = reverse (tail firstChunk)
+  in
+  (item, (remaining ++ lastChunk))
 
-randomListItem : Generator.Generator b -> [a] -> (a, Generator.Generator b)
-randomListItem gen list =
-  if | length list == 1 -> (head list, gen)
-     | otherwise -> 
-       let (index, gen') = Generator.int32Range (1, length list) gen
-       in (last (take index list), gen')
+generateCommonAttributes : (Int, Int) -> [Int] -> GamePiece {}
+generateCommonAttributes (w, h) randomInts =
+  let (randX::randY::randR::randG::randB::randSymbolIndex::others) = randomInts
+      (columnLimit, rowLimit) = TextField.toCartesianLimits <| TextField.makeLimits (w, h)
+      location = (randX `rem` columnLimit, randY `rem` rowLimit) --negatives are OK for this value only.
+      col = rgb (randR `mod` 256) (randG `mod` 256) (randB `mod` 256)
+      (symbol, _) = removeIndex ((randSymbolIndex `mod` (length KittenConstants.characters)) + 1) KittenConstants.characters
+  in
+  { char = String.fromList [symbol], cd = col, xd = fst location, yd = snd location }
 
-randomColor : Generator.Generator b -> (Color, Generator.Generator b)
-randomColor gen =
-  let colorGenerator = Generator.int32Range (0, 255)
-      (r, nextGen) = colorGenerator gen
-      (g, ds9) = colorGenerator nextGen
-      (b, voyager) = colorGenerator ds9
-  in (rgb r g b , voyager)
+makeKitten : (Int, Int) -> [Int] -> Item (GamePiece {})
+makeKitten (w, h) randomInts =
+  let baseRecord = generateCommonAttributes (w, h) randomInts 
+      kittened = { baseRecord | isKitten = True}
+  in
+  { kittened | description = KittenConstants.kittenDescription }
 
-randomLocation : Generator.Generator a -> (Int, Int) -> [(Int, Int)] -> ((Int, Int), Generator.Generator a)
-randomLocation gen (w, h) avoid =
-  let (xrand, nextGen) = Generator.int32Range (-1 * w, w) gen
-      (yrand, ds9) = Generator.int32Range (-1 * h, h) nextGen
-  in if (any ((==) (xrand, yrand)) avoid) 
-     then randomLocation ds9 (w, h) avoid --try again until we get an unpopulated location
-     else ((xrand, yrand), ds9)
+avoidCollisions : GamePiece a -> [GamePiece b] -> GamePiece a
+avoidCollisions newItem existingItems =
+  case (collision newItem existingItems) of
+      Just x -> avoidCollisions { newItem | xd <- div (newItem.xd * -1) 2} existingItems
+      Nothing -> newItem
 
-randomizeItem : Generator.Generator a -> (Int, Int) -> [(Int, Int)] -> String -> (Item {}, Generator.Generator a)
-randomizeItem gen (w, h) avoid desc =
-  let ((xrand, yrand), nextGen) = randomLocation gen (w, h) avoid
-      (charColor, voyager) = randomColor nextGen
-      (representation, enterprise) = randomListItem voyager (String.toList KittenConstants.characters) --randomize symbol
-      madeItem = { char = String.fromList [representation], description = desc,
-        isKitten = False, xd = xrand, yd = yrand, cd = charColor }
-  in (madeItem, enterprise)
-  
-itemify : (Generator.Generator a, (Int, Int), [String], [Item {}]) -> (Generator.Generator a, (Int, Int), [String], [Item {}])
-itemify (gen, dim, descs, items) =
-  if length descs == 0 then (gen, dim, descs, items)
+generateItem : (Int, Int) -> [String] -> [Int] -> ([String], Item (GamePiece {}))
+generateItem (w, h) descs randomInts =
+  let baseRecord = generateCommonAttributes (w, h) randomInts 
+      randDescIndex = head (drop 6 randomInts)
+      (description, unusedDescs) = removeIndex ((randDescIndex `mod` (length descs)) + 1) descs
+      notKitten = { baseRecord | isKitten = False }
+  in
+  (unusedDescs, { notKitten | description = description })
+
+generateItems : (Int, Int) -> [String] -> [Int] -> Int -> [Item (GamePiece {})]
+generateItems (w, h) descs randomInts howMany =
+  if howMany <= 0 || (length descs == 0) then [makeKitten (w, h) randomInts]
   else
-    let (item, gen') = randomizeItem gen dim (populatedLocations items) (head descs)
-    in itemify (gen', dim, (tail descs), item :: items)
-
-randomListSubset : ([a], [a], Generator.Generator b, Int) -> ([a], [a],Generator.Generator b, Int) 
-randomListSubset (list, random, gen, howManyMore) =
-  if (length list < 1 || howManyMore == 0) then ([], random, gen, howManyMore)
-  else 
-    let (randomElement, gen') = randomListItem gen list
-        nextList = List.filter ((/=) randomElement) list
-        (_, randomList, gen'', _) = randomListSubset (nextList, random, gen', howManyMore - 1)
-    in (nextList, --don't duplicate elements
-        randomElement :: randomList, gen', howManyMore - 1)
-
---pass maximum/minimum to this function
---(should bear some resemblance to the wrapping level, 
---otherwise kitten may be tragically rendered offscreen and unreachable)
-makeItems : Int -> (Int, Int) -> Int -> [Item {}]
-makeItems p (w, h) numToMake = 
-  let (gen', _, _, nonKittenItems) = itemify (makeGen p, (w, h), KittenConstants.rawItemList, [])
-      (_, randomizedItems, gen'', _) = randomListSubset (nonKittenItems, [], gen', numToMake)
-      (lastGen, _, _, (kitten'::[])) = itemify (gen'', (w, h), KittenConstants.kittenDescription :: [], [])
-      kitten = { kitten' | isKitten <- True }
-  in kitten :: randomizedItems
+    let (unusedDescs, item) = generateItem (w, h) descs randomInts 
+        otherItems = (generateItems (w, h) unusedDescs (drop 7 randomInts) (howMany - 1)) in
+    (avoidCollisions item otherItems) :: otherItems

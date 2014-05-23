@@ -1,37 +1,17 @@
 module KittenConstants where
 
-characters = "$%^&*()qwertyuiop[]{}asdfghjkl;:zxcvbnm,.<>"
+characters = String.toList "$%^&*()qwertyuiop[]{}asdfghjkl;:zxcvbnm,.<>"
 kittenDescription = "\nYou found kitten!  Way to go, robot."
-
-fontify : Color -> String -> Text
-fontify col x = Text.color col ( monospace ( toText x) )
-
-drawRobot : Element
-drawRobot = Text.text (
-     (fontify darkBlue "[-]   \n(") ++ (fontify darkRed "+") ++
-     (fontify darkBlue ")") ++ 
-     (fontify darkGreen "=C ") ++ 
-     (fontify darkBlue "\n| | \n") ++ 
-     (fontify gray "000 ")
-   )
-
-drawHeart : Element
-drawHeart = Text.text (
-   (fontify red ".::. .::.\n") ++ 
-   (fontify red ":::::::::\n") ++ 
-   (fontify red " \':::::\'\n") ++ 
-   (fontify red "  \':::\'")
-  )
-
-drawKitten : Element
-drawKitten = Text.text (
-      (fontify orange " |\\_/|\n |") ++ 
-      (fontify green "0 0") ++ 
-      (fontify orange "|___\n ") ++ 
-      (fontify white "=-") ++ (fontify lightRed "*") ++ 
-      (fontify white "-=") ++ 
-      (fontify orange "   \\\nc_c__(____)")
-    )
+programName = "robotfindskitten"
+programVersion = "version lambda step signal spacejam"
+repoLink = "https://github.com/yomimono/elm-finds-kitten"
+repoString = "information on this port"
+rfkLink = "http://robotfindskitten.org" 
+rfkString = "information on robotfindskitten"
+instructions = "In this game, you are robot (#). Your job is to find kitten. This task
+is complicated by the existence of various things which are not kitten.
+Robot must touch items to determine if they are kitten or not. The game
+ends when robotfindskitten.\nOn a keyboard, the arrow keys, WASD, and HJKL move robot.  Press any key to begin."
 
 --cribbed from the python implementation.
 rawItemList : [ String ]

@@ -1,9 +1,9 @@
-{ "version": "0.01"
+{ "version": "0.2.0"
 , "summary": "Robot Finds Kitten"
 , "description":
-      "You are a robot in a field of objects, one of which is kitten.  Your goal is to find which object is kitten."
+      "You are a robot in a field of objects, one of which is kitten.  Examining objects until kitten is found."
 , "license": "BSD3"
 , "repository": "http://github.com/yomimono/elm-finds-kitten"
-, "elm-version": "0.11"
-, "dependencies": { "jcollard/generator": "0.1" }
+, "elm-version": "0.12"
+, "dependencies": { }
 }

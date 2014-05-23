@@ -1,11 +1,11 @@
 ELM=elm
-BUILDDIR="build/"
 ELM_RUNTIME=`$(ELM) -g`
+BUILDDIR="build/"
 
 all : rfk
 
 rfk : 
-	$(ELM) --make -b $(BUILDDIR) rfk.elm
+	$(ELM) --make --set-runtime=elm-runtime.js -b $(BUILDDIR) rfk.elm
 	cp $(ELM_RUNTIME) $(BUILDDIR)
 
 clean :

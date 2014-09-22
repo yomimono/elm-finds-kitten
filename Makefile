@@ -5,7 +5,7 @@ BUILDDIR=build/
 all : rfk
 
 rfk : 
-	$(ELM) --make --set-runtime=elm-runtime.js --build-dir=$(BUILDDIR) rfk.elm
+	$(ELM) --make --bundle-runtime --build-dir=$(BUILDDIR) rfk.elm
 	cp $(ELM_RUNTIME) $(BUILDDIR)
 
 clean :

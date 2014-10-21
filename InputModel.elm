@@ -38,5 +38,5 @@ makeNRandomInts : Int -> (Signal a) -> [Signal Int]
 makeNRandomInts howMany howToMake =
     if howMany <= 0 then []
     else 
-       let thisRand = Random.range ((-1)*(2^16)) (2^16) howToMake in
+       let thisRand = Random.range ((-1)*(2^10)) (2^10) howToMake in
        thisRand :: makeNRandomInts (howMany - 1) howToMake

@@ -4,17 +4,30 @@ import GameLogic (collision)
 import InputModel (GamePiece, Item)
 import TextField 
 import KittenConstants
+import String (fromList)
 
-type CommonProperties a = {
-  a | char:String, xd:Int, yd:Int, cd:Color
-}
-
+-- a number to use as a seed for a random number generator.
+-- using a larger time interval than the game is likely to take 
+-- (or a browser instance is likely to survive) provides the 
+-- illusion that items can't change location, color, and symbol
+-- right in front of the player.
 largeInterval : Time
 largeInterval = 1000 * 60 * 60 * 24 * 7 * 365 --update every year (non-leap ;) )
 
+-- another possibility for seeding the RNG.
+-- using an interval this small means the items will change
+-- random attributes every two seconds, making for a challenging 
+-- game indeed!
+smallInterval : Time
+smallInterval = 2
+
+-- process the signal so it can be used as an RNG seed.
 initialSeed : Signal Int 
 initialSeed = lift floor (every largeInterval)
 
+-- remove the element with the index given from the list;
+-- return the element in the index and the list with the 
+-- element excised.
 removeIndex : Int -> [a] -> (a, [a])
 removeIndex index list =
   let firstChunk = reverse (take index list)
@@ -24,15 +37,20 @@ removeIndex index list =
   in
   (item, (remaining ++ lastChunk))
 
+-- given some random numbers and bounds on possible locations,
+-- generate locations, colors, and descriptions for items.
 generateCommonAttributes : (Int, Int) -> [Int] -> GamePiece {}
 generateCommonAttributes (w, h) randomInts =
   let (randX::randY::randR::randG::randB::randSymbolIndex::others) = randomInts
-      (columnLimit, rowLimit) = TextField.toCartesianLimits <| TextField.makeLimits (w, h)
-      location = (randX `rem` columnLimit, randY `rem` rowLimit) --negatives are OK for this value only.
+      (columnLimit, rowLimit) = 
+              TextField.toCartesianLimits <| 
+              TextField.makeLimits (w, h)
+      -- negatives are OK for location, hence the unusual use of `rem`
+      location = (randX `rem` columnLimit, randY `rem` rowLimit) 
       col = rgb (randR % 256) (randG % 256) (randB % 256)
       (symbol, _) = removeIndex ((randSymbolIndex % (length KittenConstants.characters)) + 1) KittenConstants.characters
   in
-  { char = (show symbol), cd = col, xd = fst location, yd = snd location }
+  { char = fromList [symbol], cd = col, xd = fst location, yd = snd location }
 
 makeKitten : (Int, Int) -> [Int] -> Item (GamePiece {})
 makeKitten (w, h) randomInts =

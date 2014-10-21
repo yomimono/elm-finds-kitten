@@ -4,17 +4,24 @@ import Char
 import Keyboard
 import Random
 
+-- robot, kitten, and all non-kitten items are gamepieces
+-- gamepieces have a character representation, an x/y position,
+-- and a color.  robot's are constant; others are randomized.
 type GamePiece gp = { gp | char:String, xd:Int, yd:Int, cd:Color }
 
+-- kitten and non-kitten items have descriptions and kittenness
 type Item a = { a | description:String, isKitten:Bool }
 
+-- robot collides with things; collidingWith records the description
+-- of the last item with which robot collided
 type Colliding b = { b | collidingWith: String }
 
 type State = {
-   actionTaken: Bool,
-   playingField: (Int, Int),
-   player: Colliding (GamePiece {}),
-   items: [Item (GamePiece {})]
+   actionTaken: Bool, --has a valid key been pressed? used to determine
+                      --whether the intro screen should be displayed
+   playingField: (Int, Int), -- the size of the valid play field
+   player: Colliding (GamePiece {}), -- robot's state
+   items: [Item (GamePiece {})] --the state of all items, kitten and non-
 }
 
 type Controls = {
@@ -24,16 +31,21 @@ type Controls = {
 type Input = {
    controls: Controls,
    playingField: (Int, Int),
-   randomElements: [Int] --a long list of ints from which to generate random colors, positions, symbols, etc
+   randomElements: [Int] --a long list of ints from which to generate 
+                         --random colors, positions, symbols, etc
 }
 
+-- for old-school roguelike players, allow movement with HJKL
 viKeys : Signal { x:Int, y:Int }
 viKeys =
   Keyboard.directions (Char.toCode 'K') (Char.toCode 'J') (Char.toCode 'H') (Char.toCode 'L')
 
+-- merge all possible inputs for controlling robot
+-- TODO: mobile, diagonal
 allDirectionalInputs : Signal Controls
-allDirectionalInputs = Controls <~ merges [ Keyboard.arrows, Keyboard.wasd, viKeys ]  --todo: mobile, diagonal
+allDirectionalInputs = Controls <~ merges [ Keyboard.arrows, Keyboard.wasd, viKeys ]  
 
+-- construct a big list of random numbers for later use in generating items
 makeNRandomInts : Int -> (Signal a) -> [Signal Int]
 makeNRandomInts howMany howToMake =
     if howMany <= 0 then []

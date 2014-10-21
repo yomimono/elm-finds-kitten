@@ -19,7 +19,7 @@ makeLimits (w, h) =
 --to the upper-right-hand value in a zero-centered cartesian plane
 --(basically, this is a shim between the more generally-applicable makeLimits
 --return value and the silly way I did this at first)
---also throw in a little rfk-specific logic - subtract a couple more rows for the status
+--also throw in a little rfk-specific logic - subtract a few more rows for the status
 toCartesianLimits : (Int, Int) -> (Int, Int)
 toCartesianLimits (w, h) =
-   (w // 2 - 1, h // 2 - 3)
+   (w // 2 - 1, h // 2 - 4)

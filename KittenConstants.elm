@@ -3,7 +3,9 @@ module KittenConstants where
 characters = [ '$', '%', '^', '&', '*', '(', ')', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 
   'p', '[', ']', '{', '}', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', ':', 
   'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '<', '>' ]
+maxItems = 100 --more than this and we can't generate enough random numbers
 kittenDescription = "\nYou found kitten!  Way to go, robot."
+refreshMe = "(to find kitten again, refresh this page)"
 programName = "robotfindskitten"
 programVersion = "version lambda step signal spacejam"
 repoLink = "https://github.com/yomimono/elm-finds-kitten"

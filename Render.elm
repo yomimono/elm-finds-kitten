@@ -6,28 +6,35 @@ import Char
 import Text
 import GameLogic (kittenFound)
 import InputModel (GamePiece, State)
-import KittenConstants (programName, programVersion, repoLink, repoString, rfkLink, rfkString, kittenDescription, instructions)
+import KittenConstants (programName, programVersion, repoLink, repoString, 
+       rfkLink, rfkString, kittenDescription, instructions, refreshMe)
 import TextField (toCartesianLimits, makeLimits)
 
 fontify : Color -> String -> Text
 fontify col x = 
         Text.color col ( monospace ( toText x ) )
 
+-- given an (x,y) position and the window dimensions, 
+-- along with an element to draw,
+-- return the correct arguments to move to draw it in the right place
 nextPoint : (Int, Int) -> (Int, Int) -> Element -> (Float, Float)
 nextPoint (x, y) (w', h') char =
   let (nextX, nextY) = (toFloat ((widthOf char) * x), 
                         toFloat ((heightOf char) * y))
       (w, h) = (toFloat w', toFloat h')
   in 
-    if | nextX*2 > w -> (nextX - w, nextY)
+    --refuse to draw anything off the edge of the screen
+    if | nextX*2 > w -> (nextX - w, nextY) 
        | nextY*2 > h -> (nextX, nextY - h)
        | otherwise -> (nextX, nextY)
 
+-- for any given gamepiece, draw it within the window bounds
 drawItemForm : (Int, Int) -> GamePiece a -> Form
 drawItemForm (w, h) item = 
     let element = centered <| fontify item.cd item.char in
     move (nextPoint (item.xd, item.yd) (w, h) element) (toForm element)
 
+-- set up message text to read nicely
 getMessage : String -> Element
 getMessage r = centered (bold (fontify white r))
 
@@ -49,6 +56,7 @@ drawHeart = centered (
    (fontify red "\':::\'")
   )
 
+-- trust me, it's a kitten
 drawKitten : Element
 drawKitten = leftAligned(
       (fontify orange " |\\_/|\n |") ++ 
@@ -69,9 +77,11 @@ foundAnimation (w, h) =
           drawHeart,
           drawKitten
         ]),
-        getMessage kittenDescription])
+        getMessage kittenDescription,
+        centered (fontify grey refreshMe)])
      ]
 
+-- intro screen is entirely static text & compliant with RFK RFC
 showIntroScreen : Element
 showIntroScreen = 
       flow down [
@@ -88,7 +98,7 @@ render { actionTaken, playingField, player, items } =
       robot = player
       roboElem = centered ( fontify white robot.char )
       (limitX, limitY) = toCartesianLimits <| makeLimits playingField
-      upperLeft = (0, limitY + 3)
+      upperLeft = (0, limitY + 2)
       message = move (nextPoint upperLeft playingField roboElem) (toForm (getMessage robot.collidingWith)) 
   in case kittenFound robot of
     False -> collage w h ( (++) ([

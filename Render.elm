@@ -3,13 +3,15 @@ module Render where
 import Window
 import List
 import Char
+import Text
 import GameLogic (kittenFound)
 import InputModel (GamePiece, State)
 import KittenConstants (programName, programVersion, repoLink, repoString, rfkLink, rfkString, kittenDescription, instructions)
 import TextField (toCartesianLimits, makeLimits)
 
 fontify : Color -> String -> Text
-fontify col x = Text.color col <| monospace <| toText x
+fontify col x = 
+        Text.color col ( monospace ( toText x ) )
 
 nextPoint : (Int, Int) -> (Int, Int) -> Element -> (Float, Float)
 nextPoint (x, y) (w', h') char =
@@ -23,14 +25,14 @@ nextPoint (x, y) (w', h') char =
 
 drawItemForm : (Int, Int) -> GamePiece a -> Form
 drawItemForm (w, h) item = 
-    let element = Text.centered <| fontify item.cd item.char in
+    let element = centered <| fontify item.cd item.char in
     move (nextPoint (item.xd, item.yd) (w, h) element) (toForm element)
 
 getMessage : String -> Element
 getMessage r = centered (bold (fontify white r))
 
 drawRobot : Element
-drawRobot = Text.leftAligned (
+drawRobot = leftAligned (
      (fontify darkBlue "[-] \n(") ++ 
      (fontify darkRed "+") ++
      (fontify darkBlue ")") ++ 
@@ -40,7 +42,7 @@ drawRobot = Text.leftAligned (
    )
 
 drawHeart : Element
-drawHeart = Text.centered (
+drawHeart = centered (
    (fontify red ".::. .::.\n") ++ 
    (fontify red ":::::::::\n") ++ 
    (fontify red "\':::::\'\n") ++ 
@@ -48,7 +50,7 @@ drawHeart = Text.centered (
   )
 
 drawKitten : Element
-drawKitten = Text.leftAligned(
+drawKitten = leftAligned(
       (fontify orange " |\\_/|\n |") ++ 
       (fontify green "0 0") ++ 
       (fontify orange "|___\n ") ++ 
@@ -73,10 +75,10 @@ foundAnimation (w, h) =
 showIntroScreen : Element
 showIntroScreen = 
       flow down [
-          Text.leftAligned (fontify black (programName ++ " " ++ programVersion))
-          , link repoLink (Text.leftAligned <| fontify blue repoString)
-          , link rfkLink (Text.leftAligned <| fontify blue rfkString)
-          , Text.leftAligned (fontify black instructions)
+          leftAligned (fontify black (programName ++ " " ++ programVersion))
+          , link repoLink (leftAligned <| fontify blue repoString)
+          , link rfkLink (leftAligned <| fontify blue rfkString)
+          , leftAligned (fontify black instructions)
       ]
 
 render : State -> Element
@@ -84,7 +86,7 @@ render { actionTaken, playingField, player, items } =
   if actionTaken == False then showIntroScreen else  
   let (w, h) = playingField
       robot = player
-      roboElem = Text.centered ( fontify white robot.char )
+      roboElem = centered ( fontify white robot.char )
       (limitX, limitY) = toCartesianLimits <| makeLimits playingField
       upperLeft = (0, limitY + 3)
       message = move (nextPoint upperLeft playingField roboElem) (toForm (getMessage robot.collidingWith)) 

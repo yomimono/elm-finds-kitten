@@ -1,6 +1,8 @@
 module KittenConstants where
 
-characters = String.toList "$%^&*()qwertyuiop[]{}asdfghjkl;:zxcvbnm,.<>"
+characters = [ '$', '%', '^', '&', '*', '(', ')', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 
+  'p', '[', ']', '{', '}', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', ':', 
+  'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '<', '>' ]
 kittenDescription = "\nYou found kitten!  Way to go, robot."
 programName = "robotfindskitten"
 programVersion = "version lambda step signal spacejam"

@@ -3,7 +3,7 @@ module TextField where
 -- return the size of an arbitrary monospace character.
 charDims : (Int, Int)
 charDims =
-   let sampleChar = Text.centered <| monospace <| toText "@" 
+   let sampleChar = centered <| monospace <| toText "@" 
    in (widthOf sampleChar, heightOf sampleChar)
 
 -- given a width, height pair, e.g. from Window.Dimensions,
@@ -12,7 +12,7 @@ charDims =
 makeLimits : (Int, Int) -> (Int, Int)
 makeLimits (w, h) = 
    let (charWidth, charHeight) = charDims
-   in (w `div` charWidth, h `div` charHeight)
+   in (w // charWidth, h // charHeight)
 
 --map a pair of (w, h) values corresponding to the maxiumum number of 
 --full columns and rows displayable on the screen,
@@ -22,4 +22,4 @@ makeLimits (w, h) =
 --also throw in a little rfk-specific logic - subtract a couple more rows for the status
 toCartesianLimits : (Int, Int) -> (Int, Int)
 toCartesianLimits (w, h) =
-   (w `div` 2 - 1, h `div` 2 - 3)
+   (w // 2 - 1, h // 2 - 3)

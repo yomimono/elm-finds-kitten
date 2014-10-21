@@ -29,10 +29,10 @@ generateCommonAttributes (w, h) randomInts =
   let (randX::randY::randR::randG::randB::randSymbolIndex::others) = randomInts
       (columnLimit, rowLimit) = TextField.toCartesianLimits <| TextField.makeLimits (w, h)
       location = (randX `rem` columnLimit, randY `rem` rowLimit) --negatives are OK for this value only.
-      col = rgb (randR `mod` 256) (randG `mod` 256) (randB `mod` 256)
-      (symbol, _) = removeIndex ((randSymbolIndex `mod` (length KittenConstants.characters)) + 1) KittenConstants.characters
+      col = rgb (randR % 256) (randG % 256) (randB % 256)
+      (symbol, _) = removeIndex ((randSymbolIndex % (length KittenConstants.characters)) + 1) KittenConstants.characters
   in
-  { char = String.fromList [symbol], cd = col, xd = fst location, yd = snd location }
+  { char = (show symbol), cd = col, xd = fst location, yd = snd location }
 
 makeKitten : (Int, Int) -> [Int] -> Item (GamePiece {})
 makeKitten (w, h) randomInts =
@@ -44,14 +44,14 @@ makeKitten (w, h) randomInts =
 avoidCollisions : GamePiece a -> [GamePiece b] -> GamePiece a
 avoidCollisions newItem existingItems =
   case (collision newItem existingItems) of
-      Just x -> avoidCollisions { newItem | xd <- div (newItem.xd * -1) 2} existingItems
+      Just x -> avoidCollisions { newItem | xd <- (//) (newItem.xd * -1) 2} existingItems
       Nothing -> newItem
 
 generateItem : (Int, Int) -> [String] -> [Int] -> ([String], Item (GamePiece {}))
 generateItem (w, h) descs randomInts =
   let baseRecord = generateCommonAttributes (w, h) randomInts 
       randDescIndex = head (drop 6 randomInts)
-      (description, unusedDescs) = removeIndex ((randDescIndex `mod` (length descs)) + 1) descs
+      (description, unusedDescs) = removeIndex ((randDescIndex % (length descs)) + 1) descs
       notKitten = { baseRecord | isKitten = False }
   in
   (unusedDescs, { notKitten | description = description })

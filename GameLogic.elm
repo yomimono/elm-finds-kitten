@@ -8,7 +8,7 @@ kittenFound : Colliding a -> Bool
 kittenFound r = r.collidingWith == KittenConstants.kittenDescription
 
 itemsToMake : (Int, Int) -> Int
-itemsToMake (x, y) = max 10 ((//) (x * y) 20000)
+itemsToMake (x, y) = min KittenConstants.maxItems ((//) (x * y) 20000)
 
 samePlace : GamePiece a -> GamePiece b -> Bool
 samePlace robot item = robot.xd == item.xd && robot.yd == item.yd

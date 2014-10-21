@@ -30,8 +30,10 @@ step {controls, playingField, randomElements} statusQuo =
       -- the list of random items is also regenerated each step; the only element of
       -- generation likely to change between turns is the window size.
       items = generateItems playingField KittenConstants.rawItemList randomElements howManyItems
+      screenChange = (/=) playingField statusQuo.playingField
   in
-  if (not (kittenFound player)) && (x /= 0 || y /= 0) then --only update state on movement
+  --only update state on movement or window size change
+  if (not (kittenFound player)) && ((x /= 0 || y /= 0) || screenChange) then 
     let obligatoryChanges = 
             { statusQuo | playingField <- playingField, 
                           actionTaken <- True,
@@ -57,8 +59,12 @@ main =
           items = [], 
           playingField = (800, 600)
   } 
-      --howManyRandom = (length KittenConstants.rawItemList) * 9 + 7
-      howManyRandom = 1000
+      -- 2000 items is OK, 3000 gives a too much recursion error
+      -- this means the number of randomized 
+      -- non-kitten items must be limited to (2000 - 6)/6,
+      -- since we need 6 random numbers per non-kitten item
+      -- 332 non-kitten items ought to be enough for anyone
+      howManyRandom = (KittenConstants.maxItems * 9) + 7
       makeItGo = 
               Input <~ 
               allDirectionalInputs ~ 

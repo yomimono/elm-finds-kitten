@@ -1,10 +1,10 @@
-{ "version": "0.2.0"
+{ "version": "0.3.0"
 , "summary": "Robot Finds Kitten"
 , "description":
       "You are a robot in a field of objects, one of which is kitten.  Examining objects until kitten is found."
 , "license": "BSD3"
 , "repository": "http://github.com/yomimono/elm-finds-kitten.git"
-, "elm-version": "0.12"
+, "elm-version": "0.13"
 , "exposed-modules":[]
 , "dependencies": { }
 }

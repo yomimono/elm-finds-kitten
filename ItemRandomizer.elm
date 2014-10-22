@@ -11,19 +11,15 @@ import String (fromList)
 -- (or a browser instance is likely to survive) provides the 
 -- illusion that items can't change location, color, and symbol
 -- right in front of the player.
-largeInterval : Time
-largeInterval = 1000 * 60 * 60 * 24 * 7 * 365 --update every year (non-leap ;) )
-
--- another possibility for seeding the RNG.
--- using an interval this small means the items will change
--- random attributes every two seconds, making for a challenging 
--- game indeed!
-smallInterval : Time
-smallInterval = 1000 * 5
+interval : Bool -> Time
+interval small = 
+        if small then 1000 * 2 
+        else 1000 * 60 * 60 * 24 * 7 * 365 --update every year (non-leap ;) )
 
 -- process the signal so it can be used as an RNG seed.
-initialSeed : Time -> Signal Int 
-initialSeed interval = lift floor (every interval)
+initialSeed : Bool -> Signal Int 
+initialSeed small =
+        lift floor (every (interval small))
 
 -- remove the element with the index given from the list;
 -- return the element in the index and the list with the 

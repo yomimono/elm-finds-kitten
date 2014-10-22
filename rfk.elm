@@ -5,7 +5,7 @@ import Char
 import GameLogic (collision, itemsToMake, kittenFound)
 import KittenConstants
 import InputModel (Input, State, GamePiece, Colliding, allDirectionalInputs, makeNRandomInts)
-import ItemRandomizer (generateItems, initialSeed)
+import ItemRandomizer (generateItems, initialSeed, largeInterval, smallInterval)
 import Render (render)
 import TextField (toCartesianLimits, makeLimits)
 
@@ -32,24 +32,28 @@ step {controls, playingField, randomElements} statusQuo =
       items = generateItems playingField KittenConstants.rawItemList randomElements howManyItems
       screenChange = (/=) playingField statusQuo.playingField
   in
-  --only update state on movement or window size change
-  if (not (kittenFound player)) && ((x /= 0 || y /= 0) || screenChange) then 
-    let obligatoryChanges = 
+  -- only update state on movement or window size change
+  -- if (not (kittenFound player)) && ((x /= 0 || y /= 0) || screenChange) then 
+  let obligatoryChanges = 
             { statusQuo | playingField <- playingField, 
                           actionTaken <- True,
-                          items <- items } in
+                          items <- items } 
+  in
+
     -- robot will be updated differently depending on whether robot is 
     -- touching something.  if robot is touching an item,
     -- update robot's collidingWith field to reflect the item's description,
     -- so the renderer can display the description (or the victory screen).
-    case (collision (updatePosition player (x, y) playingField) items) of
+   case (collision (updatePosition player (x, y) playingField) items) of
       Just otherItem -> -- robot is touching an item!
            let newPlayer = { player | collidingWith <- otherItem.description }
            in { obligatoryChanges | player <- newPlayer }
       Nothing -> -- robot is not touching anything.
+      case (x, y) of
+         (0, 0) -> { obligatoryChanges | player <- player }
+         _ -> 
            let newPlayer = updatePosition ( {player | collidingWith <- ""} ) (x, y) playingField
            in { obligatoryChanges | player <- newPlayer }
-  else { statusQuo | playingField <- playingField } -- if no movement, no change
 
 main : Signal Element
 main =
@@ -69,5 +73,6 @@ main =
               Input <~ 
               allDirectionalInputs ~ 
               Window.dimensions ~ 
-              combine (makeNRandomInts howManyRandom initialSeed)
+              combine (makeNRandomInts howManyRandom (initialSeed largeInterval
+              ))
   in render <~ (foldp step boringState makeItGo)

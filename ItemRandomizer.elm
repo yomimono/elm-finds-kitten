@@ -19,11 +19,11 @@ largeInterval = 1000 * 60 * 60 * 24 * 7 * 365 --update every year (non-leap ;) )
 -- random attributes every two seconds, making for a challenging 
 -- game indeed!
 smallInterval : Time
-smallInterval = 2
+smallInterval = 1000 * 5
 
 -- process the signal so it can be used as an RNG seed.
-initialSeed : Signal Int 
-initialSeed = lift floor (every largeInterval)
+initialSeed : Time -> Signal Int 
+initialSeed interval = lift floor (every interval)
 
 -- remove the element with the index given from the list;
 -- return the element in the index and the list with the 

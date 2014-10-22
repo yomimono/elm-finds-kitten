@@ -16,6 +16,7 @@ instructions = "In this game, you are robot (#). Your job is to find kitten. Thi
 is complicated by the existence of various things which are not kitten.
 Robot must touch items to determine if they are kitten or not. The game
 ends when robotfindskitten.\nOn a keyboard, the arrow keys, WASD, and HJKL move robot.  Press any key to begin."
+wantItemsMove = "\nCheck the box if you wish to play in Sleepy Robot Mode, where robot will occasionally become inoperative for long enough for the items around robot to change."
 
 --cribbed from the python implementation.
 rawItemList : [ String ]

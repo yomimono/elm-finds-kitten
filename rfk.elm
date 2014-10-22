@@ -5,8 +5,8 @@ import Char
 import GameLogic (collision, itemsToMake, kittenFound)
 import KittenConstants
 import InputModel (Input, State, GamePiece, Colliding, allDirectionalInputs, makeNRandomInts)
-import ItemRandomizer (generateItems, initialSeed, largeInterval, smallInterval)
-import Render (render)
+import ItemRandomizer (generateItems, initialSeed)
+import Render (render, check)
 import TextField (toCartesianLimits, makeLimits)
 
 robot = { char = "#", xd = 0, yd = 0, 
@@ -21,7 +21,7 @@ updatePosition r (x, y) windowDimensions =
 
 -- move the simulation forward one turn by returning a modified statusQuo
 step : Input -> State -> State
-step {controls, playingField, randomElements} statusQuo =
+step {controls, playingField, slowRandomElements, fastRandomElements, robotSleepy} statusQuo =
   let {x, y} = controls.direction 
       player = statusQuo.player 
       -- the number of non-kitten items is generated each turn based on window size.
@@ -29,22 +29,25 @@ step {controls, playingField, randomElements} statusQuo =
       howManyItems = itemsToMake playingField
       -- the list of random items is also regenerated each step; the only element of
       -- generation likely to change between turns is the window size.
-      items = generateItems playingField KittenConstants.rawItemList randomElements howManyItems
       screenChange = (/=) playingField statusQuo.playingField
-  in
-  -- only update state on movement or window size change
-  -- if (not (kittenFound player)) && ((x /= 0 || y /= 0) || screenChange) then 
-  let obligatoryChanges = 
+      actionTaken = case ((x, y), statusQuo.actionTaken) of
+              ((0, 0), False) -> False
+              (_, _) -> True
+      items = case (actionTaken, robotSleepy) of
+              (True, True) -> generateItems playingField KittenConstants.rawItemList fastRandomElements howManyItems
+              (_ , _) -> generateItems playingField KittenConstants.rawItemList slowRandomElements howManyItems
+      obligatoryChanges = 
             { statusQuo | playingField <- playingField, 
-                          actionTaken <- True,
-                          items <- items } 
+                          items <- items,
+                          actionTaken <- actionTaken,
+                          itemsMove <- robotSleepy
+                          }
   in
-
     -- robot will be updated differently depending on whether robot is 
     -- touching something.  if robot is touching an item,
     -- update robot's collidingWith field to reflect the item's description,
     -- so the renderer can display the description (or the victory screen).
-   case (collision (updatePosition player (x, y) playingField) items) of
+    case (collision (updatePosition player (x, y) playingField) items) of
       Just otherItem -> -- robot is touching an item!
            let newPlayer = { player | collidingWith <- otherItem.description }
            in { obligatoryChanges | player <- newPlayer }
@@ -61,18 +64,16 @@ main =
           actionTaken = False, 
           player = robot, 
           items = [], 
-          playingField = (800, 600)
+          playingField = (800, 600),
+          itemsMove = False
   } 
-      -- 2000 items is OK, 3000 gives a too much recursion error
-      -- this means the number of randomized 
-      -- non-kitten items must be limited to (2000 - 6)/6,
-      -- since we need 6 random numbers per non-kitten item
-      -- 332 non-kitten items ought to be enough for anyone
       howManyRandom = (KittenConstants.maxItems * 9) + 7
-      makeItGo = 
+      makeItGo = -- how to construct the Input record
               Input <~ 
               allDirectionalInputs ~ 
               Window.dimensions ~ 
-              combine (makeNRandomInts howManyRandom (initialSeed largeInterval
-              ))
+              combine (makeNRandomInts howManyRandom (initialSeed False)) ~
+              combine (makeNRandomInts howManyRandom (initialSeed True)) ~
+              check.signal
+
   in render <~ (foldp step boringState makeItGo)

@@ -21,7 +21,10 @@ type State = {
                       --whether the intro screen should be displayed
    playingField: (Int, Int), -- the size of the valid play field
    player: Colliding (GamePiece {}), -- robot's state
-   items: [Item (GamePiece {})] --the state of all items, kitten and non-
+   --slowItems: [Item (GamePiece {})], --the state of all items, kitten and non-
+   --fastItems: [Item (GamePiece {})], --the state of all items, kitten and non-
+   items: [Item (GamePiece {})], --the state of all items, kitten and non-
+   itemsMove: Bool
 }
 
 type Controls = {
@@ -31,8 +34,11 @@ type Controls = {
 type Input = {
    controls: Controls,
    playingField: (Int, Int),
-   randomElements: [Int] --a long list of ints from which to generate 
-                         --random colors, positions, symbols, etc
+   slowRandomElements: [Int], -- a list of random numbers which won't
+                              -- likely change over the course of the game
+   fastRandomElements: [Int], -- a list of random numbers which change 
+                              -- every few seconds
+   robotSleepy: Bool
 }
 
 -- for old-school roguelike players, allow movement with HJKL

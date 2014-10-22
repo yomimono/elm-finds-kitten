@@ -4,10 +4,11 @@ import Window
 import List
 import Char
 import Text
+import Graphics.Input as GI
 import GameLogic (kittenFound)
 import InputModel (GamePiece, State)
 import KittenConstants (programName, programVersion, repoLink, repoString, 
-       rfkLink, rfkString, kittenDescription, instructions, refreshMe)
+       rfkLink, rfkString, kittenDescription, instructions, refreshMe, wantItemsMove)
 import TextField (toCartesianLimits, makeLimits)
 
 fontify : Color -> String -> Text
@@ -81,6 +82,16 @@ foundAnimation (w, h) =
         centered (fontify grey refreshMe)])
      ]
 
+check : GI.Input Bool
+check = GI.input False
+
+itemsMoveQuestion : Element
+itemsMoveQuestion =
+     flow down [
+        leftAligned <| fontify black wantItemsMove,
+        GI.checkbox check.handle identity False
+     ]
+
 -- intro screen is entirely static text & compliant with RFK RFC
 showIntroScreen : Element
 showIntroScreen = 
@@ -89,10 +100,11 @@ showIntroScreen =
           , link repoLink (leftAligned <| fontify blue repoString)
           , link rfkLink (leftAligned <| fontify blue rfkString)
           , leftAligned (fontify black instructions)
+          , itemsMoveQuestion
       ]
 
 render : State -> Element
-render { actionTaken, playingField, player, items } = 
+render { actionTaken, playingField, player, items, itemsMove } = 
   if actionTaken == False then showIntroScreen else  
   let (w, h) = playingField
       robot = player
@@ -100,6 +112,7 @@ render { actionTaken, playingField, player, items } =
       (limitX, limitY) = toCartesianLimits <| makeLimits playingField
       upperLeft = (0, limitY + 2)
       message = move (nextPoint upperLeft playingField roboElem) (toForm (getMessage robot.collidingWith)) 
+      debug = toForm (asText itemsMove)
   in case kittenFound robot of
     False -> collage w h ( (++) ([
       filled black (rect (toFloat w) (toFloat h))
